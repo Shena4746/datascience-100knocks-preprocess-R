@@ -1,0 +1,7 @@
+book_filename: index.Rmd
+delete_merged_file: true
+rmd_files: 
+  - top.Rmd # bind Rmd in this order.
+  - 01-intro.Rmd
+  - 02-main.Rmd
+  

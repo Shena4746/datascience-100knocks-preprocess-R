@@ -1,0 +1,12 @@
+---
+title: "A Minimal Book Example"
+author: "shena"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+description: "This is a minimal example of using
+  the bookdown package to write a book."
+github-repo: 'Shena4746/latex-templete-vscode'
+---
+
+# index 
+I'm index. glad to see you.

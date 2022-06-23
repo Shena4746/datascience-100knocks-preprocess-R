@@ -1,0 +1,56 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Open index.html in Chrome",
+			"type": "shell",
+			"command": "fd index.html -t f ${workspaceFolder}/docs -x google-chrome {}",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Clear All Output Files in docs Directory",
+			"type": "shell",
+			"command": "fd . ${workspaceFolder}/docs -x rm -rf {}",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Render Book",
+			"type": "shell",
+			"command": "Rscript -e 'setwd(\"${workspaceFolder}/scr\")' -e \"bookdown::render_book('top.Rmd', 'bookdown::gitbook', output_dir = '${workspaceFolder}/docs')\"",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Render Book and Open in Chrome",
+			"type": "shell",
+			"command": "echo rendering book...",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			},
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Render Book",
+				"Open index.html in Chrome"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+	]
+}
