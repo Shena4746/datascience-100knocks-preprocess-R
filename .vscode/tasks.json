@@ -4,6 +4,20 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Clear Rendered Results",
+			"type": "shell",
+			"command": "Rscript -e 'rm(list=ls())' -e 'gc()' -e 'gc()'",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			},
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Clear All Output Files in docs Directory"
+			]
+		},
+		{
 			"label": "Open index.html in Chrome",
 			"type": "shell",
 			"command": "fd index.html -t f ${workspaceFolder}/docs -x google-chrome {}",
@@ -36,7 +50,7 @@
 		{
 			"label": "Render Book and Open in Chrome",
 			"type": "shell",
-			"command": "echo rendering book...",
+			"command": "echo ending task...",
 			"presentation": {
 				"reveal": "silent",
 				"revealProblems": "onProblem",

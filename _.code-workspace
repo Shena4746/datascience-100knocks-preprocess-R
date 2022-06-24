@@ -4,5 +4,8 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"r.rmarkdown.knit.defaults.knitWorkingDirectory": "workspace root",
+		"r.rmarkdown.knit.openOutputFile": true
+	}
 }

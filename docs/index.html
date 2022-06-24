@@ -4,26 +4,26 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>A Minimal Book Example</title>
+  <title>dbplyrでデータサイエンス100本ノック(構造化データ加工編).</title>
   <meta name="description" content="This is a minimal example of using the bookdown package to write a book." />
   <meta name="generator" content="bookdown 0.27 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="A Minimal Book Example" />
+  <meta property="og:title" content="dbplyrでデータサイエンス100本ノック(構造化データ加工編)." />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="This is a minimal example of using the bookdown package to write a book." />
-  <meta name="github-repo" content="Shena4746/latex-templete-vscode" />
+  <meta name="github-repo" content="Shena4746/datascience-100knocks-preprocess-R" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="A Minimal Book Example" />
+  <meta name="twitter:title" content="dbplyrでデータサイエンス100本ノック(構造化データ加工編)." />
   
   <meta name="twitter:description" content="This is a minimal example of using the bookdown package to write a book." />
   
 
-<meta name="author" content="shena" />
+<meta name="author" content="Shena" />
 
 
-<meta name="date" content="2022-06-24" />
+<meta name="date" content="2022-06-25" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -31,7 +31,7 @@
   
   
 
-<link rel="next" href="introduction.html"/>
+<link rel="next" href="準備.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -55,6 +55,68 @@
 <script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
 
 
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
 
 
 </head>
@@ -69,12 +131,41 @@
       <nav role="navigation">
 
 <ul class="summary">
-<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> index</a></li>
-<li class="chapter" data-level="2" data-path="introduction.html"><a href="introduction.html"><i class="fa fa-check"></i><b>2</b> Introduction</a><ul>
-<li class="chapter" data-level="2.1" data-path="introduction.html"><a href="introduction.html#why-bookdown"><i class="fa fa-check"></i><b>2.1</b> Why bookdown?</a></li>
+<li class="chapter" data-level="1" data-path="前置き.html"><a href="前置き.html"><i class="fa fa-check"></i><b>1</b> 前置き</a><ul>
+<li class="chapter" data-level="1.1" data-path="前置き.html"><a href="前置き.html#概要"><i class="fa fa-check"></i><b>1.1</b> 概要</a></li>
+<li class="chapter" data-level="1.2" data-path="前置き.html"><a href="前置き.html#dbplyr-とは"><i class="fa fa-check"></i><b>1.2</b> dbplyr とは</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="getting-started.html"><a href="getting-started.html"><i class="fa fa-check"></i><b>3</b> Getting Started</a><ul>
-<li class="chapter" data-level="3.1" data-path="getting-started.html"><a href="getting-started.html#is-everything-ok"><i class="fa fa-check"></i><b>3.1</b> Is Everything Ok?</a></li>
+<li class="chapter" data-level="2" data-path="準備.html"><a href="準備.html"><i class="fa fa-check"></i><b>2</b> 準備</a></li>
+<li class="chapter" data-level="3" data-path="回答例.html"><a href="回答例.html"><i class="fa fa-check"></i><b>3</b> 回答例</a><ul>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-006"><i class="fa fa-check"></i>R-006</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-015"><i class="fa fa-check"></i>R-015</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-016"><i class="fa fa-check"></i>R-016</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-019"><i class="fa fa-check"></i>R-019</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-020"><i class="fa fa-check"></i>R-020</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-026"><i class="fa fa-check"></i>R-026</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-028"><i class="fa fa-check"></i>R-028</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-029"><i class="fa fa-check"></i>R-029</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-031"><i class="fa fa-check"></i>R-031</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-033"><i class="fa fa-check"></i>R-033</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-036"><i class="fa fa-check"></i>R-036</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-038"><i class="fa fa-check"></i>R-038</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-039"><i class="fa fa-check"></i>R-039</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-041"><i class="fa fa-check"></i>R-041</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-042"><i class="fa fa-check"></i>R-042</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-043"><i class="fa fa-check"></i>R-043</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-044"><i class="fa fa-check"></i>R-044</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-045"><i class="fa fa-check"></i>R-045</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-046"><i class="fa fa-check"></i>R-046</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-047"><i class="fa fa-check"></i>R-047</a></li>
+<li class="chapter" data-level="3.1" data-path="回答例.html"><a href="回答例.html#日付処理へのコメント"><i class="fa fa-check"></i><b>3.1</b> 日付処理へのコメント</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-052"><i class="fa fa-check"></i>R-052</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-053"><i class="fa fa-check"></i>R-053</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-054"><i class="fa fa-check"></i>R-054</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-056"><i class="fa fa-check"></i>R-056</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-057"><i class="fa fa-check"></i>R-057</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-058"><i class="fa fa-check"></i>R-058</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-059"><i class="fa fa-check"></i>R-059</a></li>
+<li class="chapter" data-level="" data-path="回答例.html"><a href="回答例.html#r-060"><i class="fa fa-check"></i>R-060</a></li>
 </ul></li>
 </ul>
 
@@ -85,7 +176,7 @@
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">A Minimal Book Example</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">dbplyrでデータサイエンス100本ノック(構造化データ加工編).</a>
           </h1>
         </div>
 
@@ -94,14 +185,31 @@
 
             <section class="normal" id="section-">
 <div id="header">
-<h1 class="title">A Minimal Book Example</h1>
-<p class="author"><em>shena</em></p>
-<p class="date"><em>2022-06-24</em></p>
+<h1 class="title">dbplyrでデータサイエンス100本ノック(構造化データ加工編).</h1>
+<p class="author"><em>Shena</em></p>
+<p class="date"><em>2022-06-25</em></p>
 </div>
-<div id="index" class="section level1 hasAnchor">
-<h1><span class="header-section-number">1</span> index<a href="index.html#index" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>I’m index. glad to see you.</p>
+<div id="前置き" class="section level1 hasAnchor">
+<h1><span class="header-section-number">1</span> 前置き<a href="前置き.html#前置き" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="概要" class="section level2 hasAnchor">
+<h2><span class="header-section-number">1.1</span> 概要<a href="前置き.html#概要" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>このドキュメントは, <a href="https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess">データサイエンス100本ノック（構造化データ加工編）</a> を R で解いた記録.
+この100本ノックに使われているデータはせいぜい10万件程度なので, 手元にデータを落として R の豊富なパッケージ群を使って処理することもできる. ただし, その方法は今回のようにデータ件数が小さいケースにしか使えない. ここでは, できるだけローカルの計算資源に依存しない方法で同ノックを倒す.</p>
+<blockquote>
+<p>note
+ただし, 全問の回答は載せていない. 特に, SQL の方が楽にできる問題はスキップしている.</p>
+</blockquote>
+</div>
+<div id="dbplyr-とは" class="section level2 hasAnchor">
+<h2><span class="header-section-number">1.2</span> dbplyr とは<a href="前置き.html#dbplyr-とは" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>詳細は以下に貼る公式ドキュメントや解説記事に譲るとして, すごく大雑把に言うと, dbplyr とは, dplyr の文法で書いた加工処理を SQL クエリに翻訳して実行した結果を返してくれるパッケージ.</p>
+<ul>
+<li><a href="https://dbplyr.tidyverse.org/articles/dbplyr.html">Introduction to dbplyr</a></li>
+<li><a href="https://yutatoyama.github.io/note/intro_R_for_SQL.html">巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として</a></li>
+</ul>
+<p>手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, 計算コストの大半をサーバー側が持ってくれる. また, 慣れ親しんだ tidyverse 生態系パッケージ群の<em>いくつかを</em>使うことができる. そのようなパッケージ以外の利用には制限が課されるため, 手元のデータを (たとえば) dbplyr で加工する場合と比べると, 必然的に道具立ては少なくなる.</p>
 
+</div>
 </div>
             </section>
 
@@ -109,7 +217,7 @@
         </div>
       </div>
 
-<a href="introduction.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="準備.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

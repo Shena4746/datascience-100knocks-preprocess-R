@@ -1,0 +1,56 @@
+# 回答例
+以下, ノックの設問とその回答を並べていく.
+設問文は, 100本ノック本家から引用.
+
+## R-006 {-}
+レシート明細データ（df_receipt）から売上⽇（sales_ymd）、顧客（customer_id）、商品コード（product_cd）、売上数量（quantity）、売上⾦額（amount）の順に列を指定し、以下の全ての条件を満たすデータを抽出せよ。
+- 顧客ID（customer_id）が"CS018205000001"
+- 売上⾦額（amount）が1,000以上または売上数量（quantity）が5以上
+
+```{r R006}
+receipt_tbl %>%
+    filter(amount >= 1000 || quantity >= 5) %>%
+    filter(customer_id == "CS018205000001") %>%
+    select(sales_ymd, customer_id, product_cd, quantity, amount) %>%
+    head()
+```
+
+## R-015 {-}
+顧客データ（df_customer）から、ステータスコード（status_cd）の先頭がアルファベットのA〜Fで始まり、末尾が数字の1〜9で終わるデータを全項⽬抽出し、10件表⽰せよ。
+```{r R015}
+library(stringr)
+# use stringr::str_detect()
+customer_tbl %>%
+    filter(str_detect(status_cd, "^[A-F].*[1-9]$")) %>%
+    head()
+```
+
+## R-016 {-}
+店舗データ（df_store）から、電話番号（tel_no）が3桁-3桁-4桁のデータを全項目表示せよ。
+
+```{r R016}
+store_tbl %>%
+    filter(str_detect(tel_no, "^\\d{3}-\\d{3}-\\d{4}$")) %>%
+    head()
+```
+
+## R-019 {-}
+レシート明細データ（df_receipt）に対し、1件あたりの売上金額（amount）が高い順にランクを付与し、先頭から10件表示せよ。項目は顧客ID（customer_id）、売上金額（amount）、付与したランクを表示させること。なお、売上金額（amount）が等しい場合は同一順位を付与するものとする。
+
+```{r R019}
+receipt_tbl %>%
+    select(customer_id, amount) %>%
+    mutate(ranking = min_rank(desc(amount))) %>%
+    arrange(ranking) %>%
+    head()
+```
+
+## R-020 {-}
+レシート明細データ（df_receipt）に対し、1件あたりの売上金額（amount）が高い順にランクを付与し、先頭から10件表示せよ。項目は顧客ID（customer_id）、売上金額（amount）、付与したランクを表示させること。なお、売上金額（amount）が等しい場合でも別順位を付与すること。
+```{r R020}
+receipt_tbl %>%
+    select(customer_id, amount) %>%
+    mutate(ranking = row_number(desc(amount))) %>%
+    arrange(ranking) %>%
+    head()
+```

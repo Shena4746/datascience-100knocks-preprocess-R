@@ -1,0 +1,83 @@
+# 準備
+
+Postgres DB が立ててあると想定して, R から DB へ接続する.
+[Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) 記載の方法に従う.
+
+絶対使うパッケージ達.
+最初の3つはコネクションを確立するために, dplyr はテーブルへの参照を得るためにそれぞれ必要.
+
+```{r libraries, message=FALSE}
+library("DBI")
+library("RPostgreSQL")
+library("dbplyr")
+library("dplyr")
+```
+
+```{r versions-of-libraries, collapse=TRUE}
+R.version.string # R version
+packageVersion("DBI")
+packageVersion("RPostgreSQL")
+packageVersion("dbplyr")
+packageVersion("dplyr")
+```
+
+[Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) は, 接続のためのコードとして以下の例を挙げ, また以下の注意を述べている:
+
+```{r example1-connect-to-DB, eval=FALSE}
+con <- DBI::dbConnect(
+    RPostgreSQL::PostgreSQL(),
+    host = "database.rstudio.com",
+    user = "your-name",
+    password = rstudioapi::askForPassword("Database password")
+)
+```
+
+>If you’re not using RStudio, you’ll need some other way to securely retrieve your password. You should never record it in your analysis scripts or type it into the console. [Securing Credentials](https://db.rstudio.com/best-practices/managing-credentials) provides some best practices.
+
+これを踏まえると, 以下の接続方法は大変行儀が悪いが, どうせ localhost にこのノック限定で立てているDBだろうし, さっさと準備を終える意味でも, ここでは咎めないことにする.
+
+```{r example2-connect-to-DB, eval=FALSE}
+con <- DBI::dbConnect(
+    RPostgreSQL::PostgreSQL(),
+    host = "localhost",
+    port = 5432,
+    dbname = "your-database-name",
+    user = "your-user",
+    password = "your-password"
+)
+```
+
+```{r connect-to-DB, eval = TRUE,include=FALSE}
+con <- DBI::dbConnect(
+    RPostgreSQL::PostgreSQL(),
+    host = "localhost",
+    port = 5432,
+    dbname = "knock100",
+    user = "guest",
+    password = "guest"
+)
+```
+
+接続できたか確認.
+
+```{r show-databases, message=TRUE}
+DBI::dbListTables(con)
+```
+
+各テーブルへの参照を取得.
+
+```{r name-variables, eval=TRUE}
+customer_tbl <- dplyr::tbl(con, "customer")
+category_tbl <- dplyr::tbl(con, "category")
+product_tbl <- dplyr::tbl(con, "product")
+receipt_tbl <- dplyr::tbl(con, "receipt")
+store_tbl <- dplyr::tbl(con, "store")
+```
+
+ちゃんとクエリが飛ばせるかテスト.
+```{r query-test}
+receipt_tbl %>%
+    filter(amount >= 1000) %>%
+    head()
+```
+この `customer_tbl` 等の参照を使って dplyr の文法でデータ加工処理を書いていく.

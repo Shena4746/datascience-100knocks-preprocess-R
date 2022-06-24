@@ -1,0 +1,83 @@
+
+## R-026 {-}
+レシート明細データ（df_receipt）に対し、顧客ID（customer_id）ごとに最も新しい売上年⽉⽇（sales_ymd）と古い売上年⽉⽇を求め、両者が異なるデータを10件表⽰せよ。
+
+```{r R026}
+receipt_tbl %>%
+    group_by(customer_id) %>%
+    summarise(latest_ymd = max(sales_ymd, na.rm = TRUE), oldest_ymd = min(sales_ymd, na.rm = TRUE)) %>%
+    filter(latest_ymd != oldest_ymd) %>%
+    head()
+```
+
+## R-028 {-}
+レシート明細データ（df_receipt）に対し、店舗コード（store_cd）ごとに売上額
+（amount）の中央値を計算し、降順でTOP5を表示せよ。
+```{r R028}
+receipt_tbl %>%
+    group_by(store_cd) %>%
+    summarise(amount = median(amount, na.rm = TRUE)) %>%
+    arrange(desc(amount)) %>%
+    head()
+```
+## R-029 {-}
+レシート明細データ（df_receipt）に対し、店舗コード（store_cd）ごとに商品コード（product_cd）の最頻値を求め、10件表示させよ。
+```{r R029}
+receipt_tbl %>%
+    group_by(store_cd, product_cd) %>%
+    summarise(count = n(), .groups = "drop_last") %>%
+    filter(count == max(count, na.rm = TRUE)) %>%
+    head()
+```
+
+## R-031 {-}
+レシート明細データ（df_receipt）に対し、店舗コード（store_cd）ごとに売上金額（amount）の標準偏差を計算し、降順で5件表示せよ。
+```{r}
+receipt_tbl %>%
+    group_by(store_cd) %>%
+    summarise(sd = sd(amount, na.rm = TRUE)) %>%
+    arrange(desc(sd)) %>%
+    head()
+```
+
+## R-033 {-}
+レシート明細データ（df_receipt）に対し、店舗コード（store_cd）ごとに売上金額（amount）の平均を計算し、330以上のものを抽出せよ。
+```{r}
+receipt_tbl %>%
+    group_by(store_cd) %>%
+    summarise(total = mean(amount, na.rm = TRUE)) %>%
+    filter(total >= 330) %>%
+    head()
+```
+
+## R-036 {-}
+レシート明細データ（df_receipt）と店舗データ（df_store）を内部結合し、レシート明細データの全項目と店舗データの店舗名（store_name）を10件表示せよ。
+```{r}
+inner_join(receipt_tbl, store_tbl, by = "store_cd") %>%
+    head()
+```
+
+## R-038 {-}
+顧客データ（df_customer）とレシート明細データ（df_receipt）から、顧客ごとの売上金額合計を求め、10件表示せよ。ただし、売上実績がない顧客については売上金額を0として表示させること。また、顧客は性別コード（gender_cd）が女性（1）であるものを対象とし、非会員（顧客IDが"Z"から始まるもの）は除外すること。
+```{r}
+customer_top20_amount <- customer_tbl %>%
+    filter(gender_cd == 1 && !str_detect(customer_id, "^Z")) %>%
+    left_join(receipt_tbl, by = "customer_id") %>%
+    group_by(customer_id) %>%
+    summarise(amount_total = sum(ifelse(is.null(amount), 0, amount))) %>%
+    arrange(desc(amount_total))
+customer_top20_amount %>% head()
+```
+
+## R-039 {-}
+レシート明細データ（df_receipt）から、売上日数の多い顧客の上位20件を抽出したデータと、売上金額合計の多い顧客の上位20件を抽出したデータをそれぞれ作成し、さらにその2つを完全外部結合せよ。ただし、非会員（顧客IDが"Z"から始まるもの）は除外すること。
+```{r}
+receipt_tbl %>%
+    filter(!str_detect(customer_id, "^Z") && !is.na(sales_ymd)) %>%
+    group_by(customer_id) %>%
+    summarise(n_days = n_distinct(sales_ymd)) %>%
+    arrange(desc(n_days)) %>%
+    head(20) %>%
+    full_join(customer_top20_amount %>% head(20), by = "customer_id") %>%
+    head()
+```

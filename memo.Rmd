@@ -1,0 +1,23 @@
+
+## R-055 {-}
+レシート明細（df_receipt）データの売上金額（amount）を顧客ID（customer_id）ごとに合計し、その合計金額の四分位点を求めよ。その上で、顧客ごとの売上金額合計に対して以下の基準でカテゴリ値を作成し、顧客ID、売上金額合計とともに10件表示せよ。カテゴリ値は順に1〜4とする。
+- 最小値以上第1四分位未満 ・・・ 1を付与
+- 第1四分位以上第2四分位未満 ・・・ 2を付与
+- 第2四分位以上第3四分位未満 ・・・ 3を付与
+- 第3四分位以上 ・・・ 4を付与
+```{r R055}
+receipt_tbl %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
+    mutate(
+        pct_group = case_when(
+            amount < quantile(amount)[2] ~ 1,
+            amount < quantile(amount)[3] ~ 2,
+            amount < quantile(amount)[4] ~ 3,
+            quantile(amount)[4] <= amount ~ 4
+        )
+    ) %>%
+    head()
+```
+
+

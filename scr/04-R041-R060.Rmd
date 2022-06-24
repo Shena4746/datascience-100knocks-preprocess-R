@@ -1,0 +1,222 @@
+## R-041 {-}
+レシート明細データ（df_receipt）の売上金額（amount）を日付（sales_ymd）ごとに集計し、前回売上があった日からの売上金額増減を計算せよ。そして結果を10件表示せよ。
+```{r R041}
+receipt_tbl %>%
+    group_by(sales_ymd) %>%
+    summarise(sales_today = sum(amount)) %>%
+    mutate(sales_yest = sales_today %>% lag()) %>%
+    mutate(diff = sales_today - sales_yest) %>%
+    head()
+```
+
+## R-042 {-}
+レシート明細データ（df_receipt）の売上金額（amount）を日付（sales_ymd）ごとに集計し、各日付のデータに対し、前回、前々回、3回前に売上があった日のデータを結合せよ。そして結果を10件表示せよ。
+```{r} 
+receipt_tbl %>%
+    group_by(sales_ymd) %>%
+    summarise(sales_daily = sum(sales_ymd)) %>%
+    mutate(
+        across(
+            sales_daily,
+            list(
+                lag_1 = ~ lag(.x, n = 1),
+                lag_2 = ~ lag(.x, n = 2),
+                lag_3 = ~ lag(.x, n = 3)
+            )
+        )
+    ) %>%
+    head()
+```
+
+## R-043 {-}
+レシート明細データ（df_receipt）と顧客データ（df_customer）を結合し、性別コード（gender_cd）と年代（ageから計算）ごとに売上金額（amount）を合計した売上サマリデータを作成せよ。性別コードは0が男性、1が女性、9が不明を表すものとする。
+
+ただし、項目構成は年代、女性の売上金額、男性の売上金額、性別不明の売上金額の4項目とすること（縦に年代、横に性別のクロス集計）。また、年代は10歳ごとの階級とすること。
+```{r}
+receipt_tbl %>%
+    inner_join(customer_tbl, by = "customer_id") %>%
+    mutate(generation = age - age %% 10) %>%
+    group_by(generation, gender_cd) %>%
+    summarise(sales_amount = amount %>% sum(), .groups = "drop") %>%
+    tidyr::pivot_wider(
+        names_from = gender_cd,
+        names_prefix = "sales",
+        values_from = sales_amount,
+        values_fill = 0
+    ) %>%
+    rename(
+        sales_male = sales0,
+        sales_female = sales1,
+        sales_other = sales9
+    ) -> sales_summary
+sales_summary
+```
+
+
+## R-044 {-}
+043で作成した売上サマリデータ（df_sales_summary）は性別の売上を横持ちさせたものであった。このデータから性別を縦持ちさせ、年代、性別コード、売上金額の3項目に変換せよ。ただし、性別コードは男性を"00"、女性を"01"、不明を"99"とする
+```{r}
+sales_summary %>%
+    rename("00" = sales_male, "01" = sales_female, "99" = sales_other) %>%
+    tidyr::pivot_longer(
+        cols = -generation,
+        names_to = "gender_cd",
+        values_to = "sales_amount"
+    ) %>%
+    head()
+```
+
+## R-045 {-}
+顧客データ（df_customer）の生年月日（birth_day）は日付型でデータを保有している。これをYYYYMMDD形式の文字列に変換し、顧客ID（customer_id）とともに10件表示せよ。
+```{r}
+library(stringr)
+# use stringr::str_replace_all()
+customer_tbl %>%
+    transmute(
+        customer_id,
+        date = birth_day %>%
+            as.character() %>%
+            str_replace_all(pattern = "-", replacement = "")
+    ) %>%
+    head()
+```
+
+## R-046 {-}
+顧客データ（df_customer）の申し込み日（application_date）はYYYYMMDD形式の文字列型でデータを保有している。これを日付型に変換し、顧客ID（customer_id）とともに10件表示せよ。
+```{r}
+customer_tbl %>%
+    transmute(customer_id, application_date = as.Date(application_date)) %>%
+    head()
+```
+
+
+## R-047 {-}
+レシート明細データ（df_receipt）の売上日（sales_ymd）はYYYYMMDD形式の数値型でデータを保有している。これを日付型に変換し、レシート番号(receipt_no)、レシートサブ番号（receipt_sub_no）とともに10件表示せよ。
+```{r}
+receipt_tbl %>%
+    transmute(
+        sales_date = sales_ymd %>% as.character() %>% as.Date(),
+        receipt_no, receipt_sub_no
+    ) %>%
+    head()
+```
+
+## 日付処理へのコメント
+日付処理は SQL で書いた方が遥かに楽なので, R にこだわる必要なし.
+R で日付を扱うパッケージとしては lubridate などがあるが, dbplyr 越しには使えないのでここでは書かない.
+というわけで R-048 から R-051 はスキップ. 
+
+## R-052 {-}
+レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに合計の上、売上金額合計に対して2,000円以下を0、2,000円より大きい金額を1に二値化し、顧客ID、売上金額合計とともに10件表示せよ。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
+```{r}
+library(stringr)
+# use stringr::str_detect()
+receipt_tbl %>%
+    filter(!str_detect(customer_id, "^Z")) %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
+    mutate(amount_over_2000 = ifelse(amount > 2000, 1, 0)) %>%
+    head()
+```
+
+## R-053 {-}
+顧客データ（df_customer）の郵便番号（postal_cd）に対し、東京（先頭3桁が100〜209のもの）を1、それ以外のものを0に二値化せよ。さらにレシート明細データ（df_receipt）と結合し、全期間において売上実績のある顧客数を、作成した二値ごとにカウントせよ。
+```{r}
+customer_tbl %>%
+    mutate(
+        is_tokyo = dplyr::between(substr(postal_cd, 1, 3) %>% as.integer(), 100, 209) %>%
+            ifelse(1, 0)
+    ) %>%
+    inner_join(receipt_tbl, by = "customer_id") %>%
+    group_by(is_tokyo) %>%
+    summarise(amount = n_distinct(customer_id)) %>%
+    head()
+```
+
+
+## R-054 {-}
+顧客データ（df_customer）の住所（address）は、埼玉県、千葉県、東京都、神奈川県のいずれかとなっている。都道府県毎にコード値を作成し、顧客ID、住所とともに10件表示せよ。値は埼玉県を11、千葉県を12、東京都を13、神奈川県を14とすること。
+```{r}
+customer_tbl %>%
+    mutate(
+        prefecture_cd =
+            case_when(
+                substr(address, 1, 2) == "埼玉" ~ "11",
+                substr(address, 1, 2) == "千葉" ~ "12",
+                substr(address, 1, 2) == "東京" ~ "13",
+                substr(address, 1, 3) == "神奈川" ~ "14"
+            )
+    ) %>%
+    select(customer_id, address, prefecture_cd) %>%
+    head()
+```
+
+## R-056 {-}
+顧客データ（df_customer）の年齢（age）をもとに10歳刻みで年代を算出し、顧客ID（customer_id）、生年月日（birth_day）とともに10件表示せよ。ただし、60歳以上は全て60歳代とすること。年代を表すカテゴリ名は任意とする。
+```{r}
+customer_tbl %>%
+    mutate(generation = ifelse(age >= 60, 60, age - age %% 10)) -> customer_generation
+
+customer_generation %>%
+    select(customer_id, birth_day, generation) %>%
+    head()
+```
+
+## R-057 {-}
+056の抽出結果と性別コード（gender_cd）により、新たに性別×年代の組み合わせを表すカテゴリデータを作成し、10件表示せよ。組み合わせを表すカテゴリの値は任意とする。
+```{r}
+customer_generation %>%
+    mutate(gender_generation = gender_cd + generation) %>%
+    select(
+        customer_id,
+        gender_cd,
+        gender,
+        age,
+        generation,
+        gender_generation
+    ) %>%
+    head()
+```
+
+## R-058 {-}
+顧客データ（df_customer）の性別コード（gender_cd）をダミー変数化し、顧客ID（customer_id）とともに10件表示せよ。
+```{r}
+customer_tbl %>%
+    select(customer_id, gender_cd) %>%
+    mutate(value = 1) %>%
+    tidyr::pivot_wider(
+        names_from = gender_cd,
+        names_prefix = "gender_cd",
+        values_from = value,
+        values_fill = 0
+    )
+```
+
+## R-059 {-}
+レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに合計し、売上金額合計を平均0、標準偏差1に標準化して顧客ID、売上金額合計とともに10件表示せよ。標準化に使用する標準偏差は、分散の平方根、もしくは不偏分散の平方根のどちらでも良いものとする。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
+
+scale 関数を dbplyr 越しに使えないので, `mean` と `sd` を使ってベタ書きする.
+```{r}
+library(stringr)
+# stringr::str_detect()
+receipt_tbl %>%
+    filter(!str_detect(customer_id, "^Z")) %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
+    mutate(std_amount = (amount - mean(amount)) / sd(amount)) %>%
+    head()
+```
+
+
+## R-060 {-}
+レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに合計し、売上金額合計を最小値0、最大値1に正規化して顧客ID、売上金額合計とともに10件表示せよ。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
+```{r}
+library(stringr)
+# stringr::str_detect()
+receipt_tbl %>%
+    filter(!str_detect(customer_id, "^Z")) %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
+    mutate(relative_pos = as.numeric((amount - min(amount))) / (max(amount) - min(amount))) %>%
+    head(10)
+```
