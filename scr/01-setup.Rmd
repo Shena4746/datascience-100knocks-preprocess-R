@@ -1,4 +1,4 @@
-# 準備
+# Preparation
 
 Postgres DB が立ててあると想定して, R から DB へ接続する.
 [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) 記載の方法に従う.
@@ -21,7 +21,12 @@ packageVersion("dbplyr")
 packageVersion("dplyr")
 ```
 
-[Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) は, 接続のためのコードとして以下の例を挙げ, また以下の注意を述べている:
+まだしてなければ, Postgres を起動.
+```{bash, eval=FALSE}
+sudo service postgresql start
+```
+
+[Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) は, DB 接続のためのコードとして以下の例と注意を述べている:
 
 ```{r example1-connect-to-DB, eval=FALSE}
 con <- DBI::dbConnect(

@@ -115,7 +115,7 @@ receipt_tbl %>%
     filter(!str_detect(customer_id, "^Z")) %>%
     group_by(customer_id) %>%
     summarise(amount = sum(amount, na.rm = TRUE)) %>%
-    mutate(amount_over_2000 = ifelse(amount > 2000, 1, 0)) %>%
+    mutate(amount_over_2000 = if_else(amount > 2000, 1, 0)) %>%
     head()
 ```
 
@@ -125,7 +125,7 @@ receipt_tbl %>%
 customer_tbl %>%
     mutate(
         is_tokyo = dplyr::between(substr(postal_cd, 1, 3) %>% as.integer(), 100, 209) %>%
-            ifelse(1, 0)
+            if_else(1, 0)
     ) %>%
     inner_join(receipt_tbl, by = "customer_id") %>%
     group_by(is_tokyo) %>%
@@ -136,26 +136,58 @@ customer_tbl %>%
 
 ## R-054 {-}
 顧客データ（df_customer）の住所（address）は、埼玉県、千葉県、東京都、神奈川県のいずれかとなっている。都道府県毎にコード値を作成し、顧客ID、住所とともに10件表示せよ。値は埼玉県を11、千葉県を12、東京都を13、神奈川県を14とすること。
-```{r}
+```{r R054}
+pref_vec <- c("埼玉県", "千葉県", "東京都", "神奈川")
+pref_map <- function(str) which(str == pref_vec) + 10 %>% as.integer()
+
 customer_tbl %>%
+    select(customer_id, address) %>%
+    mutate(pref_code = substr(address, 1, 3)) %>%
+    collect() %>%
     mutate(
-        prefecture_cd =
-            case_when(
-                substr(address, 1, 2) == "埼玉" ~ "11",
-                substr(address, 1, 2) == "千葉" ~ "12",
-                substr(address, 1, 2) == "東京" ~ "13",
-                substr(address, 1, 3) == "神奈川" ~ "14"
-            )
+        across(
+            .cols = pref_code,
+            .fns = ~ purrr::map_dbl(.x, pref_map)
+        )
     ) %>%
-    select(customer_id, address, prefecture_cd) %>%
     head()
 ```
 
+## R-055 {-}
+レシート明細（df_receipt）データの売上金額（amount）を顧客ID（customer_id）ごとに合計し、その合計金額の四分位点を求めよ。その上で、顧客ごとの売上金額合計に対して以下の基準でカテゴリ値を作成し、顧客ID、売上金額合計とともに10件表示せよ。カテゴリ値は順に1〜4とする。
+
+- 最小値以上第1四分位未満:		1を付与
+- 第1四分位以上第2四分位未満:	2を付与
+- 第2四分位以上第3四分位未満:	3を付与
+- 第3四分位以上:				4を付与
+
+
+公式回答のように `case_when` で場合分けするのが素直なやり方だが, カテゴリ数が増えたとき非常に冗長なコードとなる. `collect()`を使ってもよいなら, つまり, `group_by(customer_id)` によってデータが十分に小さくなっているなら, 以下のような書き方もできる.
+なぜ `collect()` が必要かと言うと, dbplyr が対応する SQL コードを生成する際に, `quantile` 関数の `probs` 引数の次元が2以上の場合を処理できないから.
+
+ ```{r R055}
+receipt_tbl %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount)) %>%
+    collect() %>%
+    mutate(pct_group = amount) %>%
+    mutate(
+        across(
+            .cols = pct_group,
+            .fns = function(cls) {
+                q <- quantile(cls, probs = c(0.25, 0.5, 0.75, 1.0))
+                purrr::map_int(cls, ~ which(.x <= q) %>% min())
+            }
+        )
+    ) %>%
+    head()
+ ```
+
 ## R-056 {-}
 顧客データ（df_customer）の年齢（age）をもとに10歳刻みで年代を算出し、顧客ID（customer_id）、生年月日（birth_day）とともに10件表示せよ。ただし、60歳以上は全て60歳代とすること。年代を表すカテゴリ名は任意とする。
-```{r}
+```{r R056}
 customer_tbl %>%
-    mutate(generation = ifelse(age >= 60, 60, age - age %% 10)) -> customer_generation
+    mutate(generation = if_else(age >= 60, 60, age - age %% 10)) -> customer_generation
 
 customer_generation %>%
     select(customer_id, birth_day, generation) %>%
@@ -196,7 +228,7 @@ customer_tbl %>%
 レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに合計し、売上金額合計を平均0、標準偏差1に標準化して顧客ID、売上金額合計とともに10件表示せよ。標準化に使用する標準偏差は、分散の平方根、もしくは不偏分散の平方根のどちらでも良いものとする。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
 
 scale 関数を dbplyr 越しに使えないので, `mean` と `sd` を使ってベタ書きする.
-```{r}
+```{r R059-1}
 library(stringr)
 # stringr::str_detect()
 receipt_tbl %>%
@@ -207,10 +239,23 @@ receipt_tbl %>%
     head()
 ```
 
+`collect()` していいなら, `scale` 関数を使って公式回答のように書ける.
+
+```{r R059-2}
+library(stringr)
+# stringr::str_detect()
+receipt_tbl %>%
+    filter(!str_detect(customer_id, "^Z")) %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
+    collect() %>%
+    mutate(std_amount = scale(amount, center = TRUE, scale = TRUE)) %>%
+    head()
+```
 
 ## R-060 {-}
 レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに合計し、売上金額合計を最小値0、最大値1に正規化して顧客ID、売上金額合計とともに10件表示せよ。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
-```{r}
+```{r R060}
 library(stringr)
 # stringr::str_detect()
 receipt_tbl %>%

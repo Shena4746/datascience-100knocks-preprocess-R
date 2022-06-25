@@ -3,7 +3,7 @@ delete_merged_file: true
 rmd_files: 
   - top.Rmd # bind Rmd in this order.
   - 01-setup.Rmd
-  - 02-R001-R020.Rmd
-  - 03-R021-R040.Rmd
-  - 04-R041-R060.Rmd
+  - 02-R001.Rmd
+  - 03-R021.Rmd
+  - 04-R041.Rmd
   

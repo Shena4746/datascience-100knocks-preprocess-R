@@ -12,14 +12,14 @@ github-repo: 'Shena4746/datascience-100knocks-preprocess-R'
 knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 ```
 
-# 前置き
+# About
 
 ## 概要
-このドキュメントは, [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess) を R で解いた記録.
-この100本ノックに使われているデータはせいぜい10万件程度なので, 手元にデータを落として R の豊富なパッケージ群を使って処理することもできる. ただし, その方法は今回のようにデータ件数が小さいケースにしか使えない. ここでは, できるだけローカルの計算資源に依存しない方法で同ノックを倒す.
+このドキュメントは, [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess) を R で解いた記録. dbplyr パッケージを利用して, 手元にデータをダウンロードせず, できるだけローカルの計算資源に依存しない方法で同ノックを倒す. 
 
->note
->ただし, 全問の回答は載せていない. 特に, SQL の方が楽にできる問題はスキップしている. 
+:::note
+全問の回答は載せていない. 特に, SQL の方が楽にできる問題はスキップしている.
+:::
 
 ## dbplyr とは
 
@@ -28,4 +28,4 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 - [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html)
 - [巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として](https://yutatoyama.github.io/note/intro_R_for_SQL.html)
 
-手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, 計算コストの大半をサーバー側が持ってくれる. また, 慣れ親しんだ tidyverse 生態系パッケージ群の*いくつかを*使うことができる. そのようなパッケージ以外の利用には制限が課されるため, 手元のデータを (たとえば) dbplyr で加工する場合と比べると, 必然的に道具立ては少なくなる.
+手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, 計算コストの大半をサーバー側が持ってくれる. また, 慣れ親しんだ tidyverse パッケージ群の*いくつかを*使うことができる. そのようなパッケージ以外の利用には制限が課されるため, 手元のデータを (たとえば) dbplyr で加工する場合と比べると, 必然的に道具立ては少なくなる.

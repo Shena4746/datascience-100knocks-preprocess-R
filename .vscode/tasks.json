@@ -4,9 +4,19 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Clear Rendered Results",
+			"label": "Clear Cashes",
 			"type": "shell",
 			"command": "Rscript -e 'rm(list=ls())' -e 'gc()' -e 'gc()'",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Clear Rendered Results",
+			"type": "shell",
+			"command": "echo Cleared!",
 			"presentation": {
 				"reveal": "silent",
 				"revealProblems": "onProblem",
@@ -14,7 +24,9 @@
 			},
 			"dependsOrder": "sequence",
 			"dependsOn": [
-				"Clear All Output Files in docs Directory"
+				"Clear Cashes",
+				"Clear All Output Files in docs Directory",
+				"Clear Cashes"
 			]
 		},
 		{

@@ -1,4 +1,3 @@
 # ignore .history directory that is created by vscode extension
 /.history/
-/docs/
-!/docs/index.html
+*.ipynb
