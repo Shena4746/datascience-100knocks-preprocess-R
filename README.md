@@ -4,5 +4,5 @@
 
 ## まだ未完成
 
-R-060 までは以下に反映済:
+R-080 までは以下に反映済:
 <https://shena4746.github.io/datascience-100knocks-preprocess-R/>

@@ -1,11 +1,10 @@
-# Preparation
+# 準備
 
 Postgres DB が立ててあると想定して, R から DB へ接続する.
 [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) 記載の方法に従う.
 
-絶対使うパッケージ達.
-最初の3つはコネクションを確立するために, dplyr はテーブルへの参照を得るためにそれぞれ必要.
-
+必須パッケージ達.
+最初の2つは DB への接続用.
 ```{r libraries, message=FALSE}
 library("DBI")
 library("RPostgreSQL")
@@ -80,6 +79,7 @@ store_tbl <- dplyr::tbl(con, "store")
 ```
 
 ちゃんとクエリが飛ばせるかテスト.
+
 ```{r query-test}
 receipt_tbl %>%
     filter(amount >= 1000) %>%

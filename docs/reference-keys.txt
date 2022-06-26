@@ -1,6 +1,6 @@
-about
+前置き
 概要
 dbplyr-とは
-preparation
-answers
+準備
+回答例
 日付処理へのコメント

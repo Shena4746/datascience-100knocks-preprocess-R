@@ -6,7 +6,7 @@
 		{
 			"label": "Clear Cashes",
 			"type": "shell",
-			"command": "Rscript -e 'rm(list=ls())' -e 'gc()' -e 'gc()'",
+			"command": "Rscript -e 'rm(list=ls())' -e 'gc(reset = TRUE)' -e 'gc(reset = TRUE)'",
 			"presentation": {
 				"reveal": "silent",
 				"revealProblems": "onProblem",

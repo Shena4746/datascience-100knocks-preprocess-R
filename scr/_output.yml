@@ -1,5 +1,6 @@
 bookdown::gitbook:
   split_by: none
+  highlight: "breezedark"
   config:
     toc:
       collapse: subsection

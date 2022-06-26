@@ -1,0 +1,92 @@
+## R-069 {-}
+>レシート明細データ（df_receipt）と商品データ（df_product）を結合し、顧客毎に全商品の売上金額合計と、カテゴリ大区分コード（category_major_cd）が"07"（瓶詰缶詰）の売上金額合計を計算の上、両者の比率を求めよ。抽出対象はカテゴリ大区分コード"07"（瓶詰缶詰）の売上実績がある顧客のみとし、結果を10件表示せよ。
+
+```{r R069}
+receipt_tbl %>%
+    inner_join(product_tbl, by = "product_cd") %>%
+    group_by(customer_id) %>%
+    summarise(
+        amount_canned = sum(if_else(category_major_cd == "07", amount, 0), na.rm = TRUE),
+        amount_total = sum(amount)
+    ) %>%
+    filter(amount_canned > 0) %>%
+    mutate(canned_ratio = as.numeric(amount_canned) / amount_total) %>%
+    head(10)
+```
+## R-070 {-}
+>レシート明細データ（df_receipt）の売上日（sales_ymd）に対し、顧客データ（df_customer）の会員申込日（application_date）からの経過日数を計算し、顧客ID（customer_id）、売上日、会員申込日とともに10件表示せよ（sales_ymdは数値、application_dateは文字列でデータを保持している点に注意）。
+
+`collect()` しないなら日付周りは SQL でやった方がマシだと思うので, ここでは `collect()` する前提で lubridate パッケージを使う.
+
+`lubridate::ymd()` で文字列や数値を日付型に変換し, 差分時間を `lubridate::interval` に流して, `%/% days(1)` などで希望単位での (端数切捨ての) 経過時間を得る. `%/% days(1)` の部分を `%/% months(1)` や `%/% years(1)` や `%/% seconds(1)` とするだけで類似問題を処理できる.
+```{r R070}
+customer_tbl %>%
+    inner_join(receipt_tbl %>% select(customer_id, sales_ymd), by = "customer_id") %>%
+    select(customer_id, sales_ymd, application_date) %>%
+    collect() %>%
+    mutate(elapsed_days = lubridate::interval(lubridate::ymd(application_date), lubridate::ymd(sales_ymd)) %/% lubridate::days(1)) %>%
+    head()
+```
+
+## R-074 {-}
+>レシート明細データ（df_receipt）の売上日（sales_ymd）に対し、当該週の月曜日からの経過日数を計算し、売上日、直前の月曜日付とともに10件表示せよ（sales_ymdは数値でデータを保持している点に注意）。
+
+```{r R074}
+receipt_tbl %>%
+    select(sales_ymd) %>%
+    collect() %>%
+    mutate(
+        elapsed_weekdays = lubridate::ymd(sales_ymd) %>% lubridate::wday(week_start = 1) - 1,
+        last_monday = lubridate::ymd(sales_ymd) - elapsed_weekdays
+    ) %>%
+    head()
+```
+
+
+## R-078 {-}
+>レシート明細データ（df_receipt）の売上金額（amount）を顧客単位に合計し、合計した売上金額の外れ値を抽出せよ。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。なお、ここでは外れ値を第1四分位と第3四分位の差であるIQRを用いて、「第1四分位数-1.5×IQR」を下回るもの、または「第3四分位数+1.5×IQR」を超えるものとする。結果は10件表示せよ。
+
+```{r R078}
+receipt_tbl %>%
+    filter(!str_detect(customer_id, "^Z")) %>%
+    group_by(customer_id) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
+    collect() %>%
+    filter(
+        amount %>%
+            {
+                . > quantile(., probs = 0.25) + 1.5 * IQR(.) | . < quantile(., probs = 0.25) - 1.5 * IQR(.)
+            }
+    ) %>%
+    head()
+```
+
+## R-079 {-}
+>商品データ（df_product）の各項目に対し、欠損数を確認せよ。
+
+やりたいことは最終行だが, そのためにはデータをダウンロードする必要があるので, その前に `NA` を含む行だけに絞り込んでデータサイズを落とす処理を入れた.
+
+```{r }
+product_tbl %>%
+    filter(if_any(-c(), ~ is.na(.))) %>%
+    collect() %>%
+    summarise(across(everything(), ~ is.na(.) %>% sum()))
+```
+
+## R-080 {-}
+>商品データ（df_product）のいずれかの項目に欠損が発生しているレコードを全て削除した新たな商品データを作成せよ。なお、削除前後の件数を表示させ、079で確認した件数だけ減少していることも確認すること。
+
+R079 の絞り込み処理を反転させるだけ.
+```{r R080-1}
+product_tbl %>%
+    filter(if_all(-c(), ~ !is.na(.))) %>%
+    head()
+```
+
+データを手元にダウンロードしていいなら `complete.cases`が手軽.
+```{r R080-2}
+product_tbl %>%
+    collect() %>%
+    filter(complete.cases(.)) %>%
+    head()
+```
