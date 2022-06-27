@@ -1,0 +1,93 @@
+## R-081 {-}
+>単価（unit_price）と原価（unit_cost）の欠損値について、それぞれの平均値で補完した新たな商品データを作成せよ。なお、平均値については1円未満を丸めること（四捨五入または偶数への丸めで良い）。補完実施後、各項目について欠損が生じていないことも確認すること。
+
+```{r R081}
+product_tbl %>%
+    mutate(across(c(unit_price, unit_cost), ~ coalesce(.x, mean(.x) %>% round())))
+```
+
+## R-083 {-}
+>単価（unit_price）と原価（unit_cost）の欠損値について、各商品のカテゴリ小区分コード（category_small_cd）ごとに算出した中央値で補完した新たな商品データを作成せよ。なお、中央値については1円未満を丸めること（四捨五入または偶数への丸めで良い）。補完実施後、各項目について欠損が生じていないことも確認すること。
+
+`collect()` していいなら`group_by(category_small_cd)` と `dplyr::group_modify` で,
+ 
+- テーブルをカテゴリ別に分割 (テーブルのリストを作成)
+- 分割後の各テーブルごとに欠損処理を行う
+- テーブルを1つの結合
+
+という処理を行う. `.x` には `dplyr::group_modify()` が作った各小テーブルが格納される.
+
+```{r R083-1}
+product_tbl %>%
+    collect() %>%
+    group_by(category_small_cd) %>%
+    dplyr::group_modify(~ mutate(
+        .x,
+        across(
+            .cols = c(unit_price, unit_cost),
+            .fns = ~ coalesce(.x, median(.x, na.rm = TRUE) %>% round())
+        )
+    )) %>%
+    head()
+```
+
+元々のデータが大きくて `collect()` できないないときは, 公式回答のようにすればよいだろうが, `inner_join` のコストと, 欠損を持つカラムがもっと多い場合を考えると代替案が欲しいところである.
+
+その点がボトルネックになりづらい処理を考えてみたので以下に書き留める.
+大まかなアイディアとしては, 
+
+- 欠損処理対象は欠損のある行だけなのだから, `collect()` するデータは欠損行だけに絞る.
+- 欠損行だけだと欠損代入値が不明なので, 事前に代入値を計算しておき欠損行に結合する(これが`inner_join`までの作業)
+- 欠損代入の計算だけを手元で行い (`group_modify`), 計算結果のテーブルはサーバー側に返して, サーバー側で非欠損行からなるテーブルと結合する.
+
+具体的な作業として面倒なのは, `group_modify` の `coalesce` の 2 引数目.
+例として, `.x` が `unit_price` のときを考える. 2 引数目には, 同じカテゴリの `unit_price_med` が来て欲しい. そこで, `cur_data()` で現在処理中のテーブル (これは `group_modify` によってリストに分割されたカテゴリごとの小テーブルである)を, `cur_column()` で現在処理中のカラム名をそれぞれ取得して, `summarise(across("unit_price_med", first))` としてこの列の最初の行の値を取ってきている. 各小テーブル内では, `xxxx_xxxx_med` の値は定数なので, サンプルする行はどこでもよい. 
+
+```{r R083-2, collapse=TRUE}
+product_tbl %>%
+    group_by(category_small_cd) %>%
+    # calculate median for each category
+    summarise(
+        across(
+            .cols = c(unit_price, unit_cost),
+            .fns = ~ median(.x) %>% round(),
+            .names = "{.col}_med"
+        )
+    ) %>%
+    # combine median and rows with missing value
+    inner_join(product_tbl %>% filter(if_any(-c(), ~ is.na(.))), by = "category_small_cd") %>%
+    collect() %>%
+    group_by(category_small_cd) %>%
+    group_modify(
+        ~ mutate(
+            .x,
+            across(
+                .cols = c(unit_price, unit_cost),
+                .fns = ~ coalesce(.x, cur_data() %>% summarise(across(stringr::str_c(cur_column(), "_med"), first)) %>% collect() %>% as.numeric())
+            )
+        )
+    ) %>%
+    select(-ends_with("_med")) %>%
+    # temporarily save table in server. see "copy_to"
+    copy_to(con, ., name = "product_sub_imputed", overwrite = TRUE)
+product_tbl %>%
+    filter(if_all(-c(), ~ !is.na(.))) %>%
+    copy_to(con, ., name = "product_sub_nonimputed", overwrite = TRUE)
+
+# combine and show
+# view also lives temporarily
+DBI::dbSendQuery(con, "
+	create view product_imputed as
+	select *
+	from product_sub_imputed
+	union all
+	select *
+	from product_sub_nonimputed
+")
+# show tables available now
+DBI::dbListTables(con)
+# check the numebr of non-misssing rows
+tbl(con, "product_imputed") %>%
+    filter(if_all(-c(), ~ !is.na(.))) %>%
+    summarise(n())
+```

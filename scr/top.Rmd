@@ -9,6 +9,9 @@ github-repo: 'Shena4746/datascience-100knocks-preprocess-R'
 ---
 
 ```{r setup, eval = TRUE, include=FALSE}
+rm(list = ls())
+gc(reset = TRUE)
+gc(reset = TRUE)
 knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 ```
 
@@ -28,4 +31,6 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 - [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html)
 - [巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として](https://yutatoyama.github.io/note/intro_R_for_SQL.html)
 
-手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, クエリの実行コストはサーバー側が持ってくれる. dbplyr で SQL に翻訳可能なコードのみ利用可能. したがって, 手元にデータを直接ダウンロードした場合に比べて, 必然的に道具立ては少なくなる. なお, この翻訳可能性は個別のコード単位で決定されるものであり, パッケージ単位で決まっているわけではない. この翻訳問題を回避するには, `collect()` を使ってクエリ実行後の実データをダウンロードする必要があるが, それが一般に可能なのは `summarise()` などでデータサイズが十分に小さくなった場合であろう.
+手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, クエリの実行コストはサーバー側が持ってくれる. dbplyr で SQL に翻訳可能なコードのみ利用可能. したがって, 手元にデータを直接ダウンロードした場合に比べて, 必然的に道具立ては少なくなる. なお, この翻訳可能性は個別のコード単位で決定されるものであり, パッケージ単位で決まっているわけではない. この翻訳問題を回避するには, `dplyr::collect()` を使ってクエリ実行後の実データをダウンロードする必要があるが, それが一般に可能なのは `summarise()` などでデータサイズが十分に小さくなった場合であろう.
+
+`dplyr::collect()` については dplyr [公式ドキュメント](https://dplyr.tidyverse.org/reference/compute.html) 参照. 蛇足ながら, 関連項目として, `dplyr::compute()`, `dplyr::copy_to` あたりにもよくお世話になる. 
