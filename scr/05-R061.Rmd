@@ -64,26 +64,21 @@ receipt_tbl %>%
 ## R-079 {-}
 >商品データ（df_product）の各項目に対し、欠損数を確認せよ。
 
-やりたいことは最終行だが, そのためにはデータをダウンロードする必要があるので, その前に `NA` を含む行だけに絞り込んでデータサイズを落とす処理を入れた.
-
 ```{r }
 product_tbl %>%
-    filter(if_any(-c(), ~ is.na(.))) %>%
-    collect() %>%
-    summarise(across(everything(), ~ is.na(.) %>% sum()))
+    summarise(across(.cols = everything(), .fns = ~ if_else(is.na(.x), 1, 0) %>% sum(), .names = "{.col}_NA"))
 ```
 
 ## R-080 {-}
 >商品データ（df_product）のいずれかの項目に欠損が発生しているレコードを全て削除した新たな商品データを作成せよ。なお、削除前後の件数を表示させ、079で確認した件数だけ減少していることも確認すること。
 
-R079 の絞り込み処理を反転させるだけ.
 ```{r R080-1}
 product_tbl %>%
-    filter(if_all(-c(), ~ !is.na(.))) %>%
+    filter(if_all(everything(), ~ !is.na(.))) %>%
     head()
 ```
 
-データを手元にダウンロードしていいなら `complete.cases`が手軽.
+データを手元にダウンロードしていいなら `complete.cases`も手軽.
 ```{r R080-2}
 product_tbl %>%
     collect() %>%

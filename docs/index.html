@@ -23,7 +23,7 @@
 <meta name="author" content="Shena" />
 
 
-<meta name="date" content="2022-06-28" />
+<meta name="date" content="2022-06-29" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -178,6 +178,11 @@ code span.wa { color: #da4453; } /* Warning */
 <li class="chapter" data-level="" data-path=""><a href="#r-080"><i class="fa fa-check"></i>R-080</a></li>
 <li class="chapter" data-level="" data-path=""><a href="#r-081"><i class="fa fa-check"></i>R-081</a></li>
 <li class="chapter" data-level="" data-path=""><a href="#r-083"><i class="fa fa-check"></i>R-083</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#r-084"><i class="fa fa-check"></i>R-084</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#r-087"><i class="fa fa-check"></i>R-087</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#r-089"><i class="fa fa-check"></i>R-089</a></li>
+<li class="chapter" data-level="" data-path=""><a href="#r-091"><i class="fa fa-check"></i>R-091</a></li>
+<li class="chapter" data-level="3.2" data-path=""><a href="#おまけ-処理結果の-db-への保存"><i class="fa fa-check"></i><b>3.2</b> おまけ: 処理結果の DB への保存</a></li>
 </ul></li>
 </ul>
 
@@ -199,16 +204,15 @@ code span.wa { color: #da4453; } /* Warning */
 <div id="header">
 <h1 class="title">dbplyrでデータサイエンス100本ノック(構造化データ加工編).</h1>
 <p class="author"><em>Shena</em></p>
-<p class="date"><em>2022-06-28</em></p>
+<p class="date"><em>2022-06-29</em></p>
 </div>
 <div id="前置き" class="section level1 hasAnchor">
 <h1><span class="header-section-number">1</span> 前置き<a href="#前置き" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <div id="概要" class="section level2 hasAnchor">
 <h2><span class="header-section-number">1.1</span> 概要<a href="#概要" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>このドキュメントは, <a href="https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess">データサイエンス100本ノック（構造化データ加工編）</a> を R で解いた記録. dbplyr パッケージを利用して, 手元にデータをダウンロードせず, できるだけローカルの計算資源に依存しない方針をとる.</p>
-<div class="note">
-<p>全問の回答は載せていない. 特に, SQL の方が楽にできる問題はスキップしている.</p>
-</div>
+<p>このドキュメントは, <a href="https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess">データサイエンス100本ノック（構造化データ加工編）</a> を R で解いた記録. dbplyr パッケージを利用して, 手元にデータをダウンロードせず, できるだけローカルの計算資源に依存しない方針をとる. なお, 全問の回答は載せていない. 特に, SQL の方が楽にできる問題や公式回答と似た回答になった問題の多くはスキップしている.</p>
+<p>以下の記事は大変参考にさせていただきました. 公開に感謝します.
+<a href="https://qiita.com/eitsupi/items/ae0476605cbaa3b04fc7">【R】データサイエンス100本ノック（構造化データ加工編）をtidyverseでやった</a></p>
 </div>
 <div id="dbplyr-とは" class="section level2 hasAnchor">
 <h2><span class="header-section-number">1.2</span> dbplyr とは<a href="#dbplyr-とは" class="anchor-section" aria-label="Anchor link to header"></a></h2>
@@ -219,6 +223,7 @@ code span.wa { color: #da4453; } /* Warning */
 </ul>
 <p>手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, クエリの実行コストはサーバー側が持ってくれる. dbplyr で SQL に翻訳可能なコードのみ利用可能. したがって, 手元にデータを直接ダウンロードした場合に比べて, 必然的に道具立ては少なくなる. なお, この翻訳可能性は個別のコード単位で決定されるものであり, パッケージ単位で決まっているわけではない. この翻訳問題を回避するには, <code>dplyr::collect()</code> を使ってクエリ実行後の実データをダウンロードする必要があるが, それが一般に可能なのは <code>summarise()</code> などでデータサイズが十分に小さくなった場合であろう.</p>
 <p><code>dplyr::collect()</code> については dplyr <a href="https://dplyr.tidyverse.org/reference/compute.html">公式ドキュメント</a> 参照. 蛇足ながら, 関連項目として, <code>dplyr::compute()</code>, <code>dplyr::copy_to</code> あたりにもよくお世話になる.</p>
+<div style="page-break-after: always;"></div>
 
 </div>
 </div>
@@ -235,7 +240,7 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb1-5" title="5"><span class="kw">packageVersion</span>(<span class="st">&quot;RPostgres&quot;</span>)</a>
 <a class="sourceLine" id="cb1-6" title="6"><span class="co">## [1] &#39;1.4.4.9000&#39;</span></a>
 <a class="sourceLine" id="cb1-7" title="7"><span class="kw">packageVersion</span>(<span class="st">&quot;dbplyr&quot;</span>)</a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="co">## [1] &#39;2.1.1&#39;</span></a>
+<a class="sourceLine" id="cb1-8" title="8"><span class="co">## [1] &#39;2.2.1&#39;</span></a>
 <a class="sourceLine" id="cb1-9" title="9"><span class="kw">packageVersion</span>(<span class="st">&quot;dplyr&quot;</span>)</a>
 <a class="sourceLine" id="cb1-10" title="10"><span class="co">## [1] &#39;1.0.9&#39;</span></a></code></pre></div>
 <p>まだしてなければ, Postgres を起動.</p>
@@ -253,7 +258,7 @@ code span.wa { color: #da4453; } /* Warning */
 </blockquote>
 <p>これを踏まえると, 以下の接続方法は大変行儀が悪いが, 今回はどうせ localhost にこのノック限定で立てている DB だろうし, さっさと準備を終える意味でも, ここでは咎めないことにする.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">con &lt;-<span class="st"> </span>DBI<span class="op">::</span><span class="kw">dbConnect</span>(</a>
-<a class="sourceLine" id="cb4-2" title="2">    RPostgre<span class="op">::</span><span class="kw">Postgres</span>(),</a>
+<a class="sourceLine" id="cb4-2" title="2">    RPostgres<span class="op">::</span><span class="kw">Postgres</span>(),</a>
 <a class="sourceLine" id="cb4-3" title="3">    <span class="dt">host =</span> <span class="st">&quot;localhost&quot;</span>,</a>
 <a class="sourceLine" id="cb4-4" title="4">    <span class="dt">port =</span> <span class="dv">5432</span>,</a>
 <a class="sourceLine" id="cb4-5" title="5">    <span class="dt">dbname =</span> <span class="st">&quot;your-database-name&quot;</span>,</a>
@@ -273,8 +278,8 @@ code span.wa { color: #da4453; } /* Warning */
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">receipt_tbl <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb8-2" title="2"><span class="st">    </span><span class="kw">filter</span>(amount <span class="op">&gt;=</span><span class="st"> </span><span class="dv">1000</span>) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb8-3" title="3"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 9]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 9]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   sales_ymd sales_epoch store_cd receipt_no receipt_sub_no customer_id   
 ##       &lt;int&gt;       &lt;int&gt; &lt;chr&gt;         &lt;int&gt;          &lt;int&gt; &lt;chr&gt;         
 ## 1  20181225  1545696000 S13020         1172              2 ZZ000000000000
@@ -285,6 +290,7 @@ code span.wa { color: #da4453; } /* Warning */
 ## 6  20170516  1494892800 S14023         1102              1 CS023415000240
 ## # … with 3 more variables: product_cd &lt;chr&gt;, quantity &lt;int&gt;, amount &lt;int&gt;</code></pre>
 <p>この <code>customer_tbl</code> 等の参照を使って dplyr の文法でデータ加工処理を書いていく.</p>
+<div style="page-break-after: always;"></div>
 
 </div>
 <div id="回答例" class="section level1 hasAnchor">
@@ -305,8 +311,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb10-3" title="3"><span class="st">    </span><span class="kw">filter</span>(customer_id <span class="op">==</span><span class="st"> &quot;CS018205000001&quot;</span>) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb10-4" title="4"><span class="st">    </span><span class="kw">select</span>(sales_ymd, customer_id, product_cd, quantity, amount) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb10-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 5]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [5 x 5]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   sales_ymd customer_id    product_cd quantity amount
 ##       &lt;int&gt; &lt;chr&gt;          &lt;chr&gt;         &lt;int&gt;  &lt;int&gt;
 ## 1  20180911 CS018205000001 P071401012        1   2200
@@ -325,8 +331,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb12-3" title="3">customer_tbl <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb12-4" title="4"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">str_detect</span>(status_cd, <span class="st">&quot;^[A-F].*[1-9]$&quot;</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb12-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 11]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 11]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id  customer_name gender_cd gender birth_day    age postal_cd address
 ##   &lt;chr&gt;        &lt;chr&gt;             &lt;int&gt; &lt;chr&gt;  &lt;date&gt;     &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;  
 ## 1 CS011215000… 芦田 沙耶             1 女性   1992-02-01    27 223-0062  神奈川…
@@ -346,8 +352,8 @@ code span.wa { color: #da4453; } /* Warning */
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">store_tbl <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb14-2" title="2"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">str_detect</span>(tel_no, <span class="st">&quot;^</span><span class="ch">\\</span><span class="st">d{3}-</span><span class="ch">\\</span><span class="st">d{3}-</span><span class="ch">\\</span><span class="st">d{4}$&quot;</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb14-3" title="3"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 10]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 10]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   store_cd store_name   prefecture_cd prefecture address     address_kana tel_no
 ##   &lt;chr&gt;    &lt;chr&gt;                &lt;int&gt; &lt;chr&gt;      &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt; 
 ## 1 S12014   千草台店                12 千葉県     千葉県千葉… チバケンチ…  043-1…
@@ -368,8 +374,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb16-3" title="3"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">ranking =</span> <span class="kw">min_rank</span>(<span class="kw">desc</span>(amount))) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb16-4" title="4"><span class="st">    </span><span class="kw">arrange</span>(ranking) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb16-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:     lazy query [?? x 3]
-## # Database:   postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:     SQL [6 x 3]
+## # Database:   postgres  [guest@localhost:5432/knock100]
 ## # Ordered by: ranking
 ##   customer_id    amount ranking
 ##   &lt;chr&gt;           &lt;int&gt; &lt;int64&gt;
@@ -390,8 +396,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb18-3" title="3"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">ranking =</span> <span class="kw">row_number</span>(<span class="kw">desc</span>(amount))) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb18-4" title="4"><span class="st">    </span><span class="kw">arrange</span>(ranking) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb18-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:     lazy query [?? x 3]
-## # Database:   postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:     SQL [6 x 3]
+## # Database:   postgres  [guest@localhost:5432/knock100]
 ## # Ordered by: ranking
 ##   customer_id    amount ranking
 ##   &lt;chr&gt;           &lt;int&gt; &lt;int64&gt;
@@ -413,8 +419,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb20-3" title="3"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">latest_ymd =</span> <span class="kw">max</span>(sales_ymd, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>), <span class="dt">oldest_ymd =</span> <span class="kw">min</span>(sales_ymd, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb20-4" title="4"><span class="st">    </span><span class="kw">filter</span>(latest_ymd <span class="op">!=</span><span class="st"> </span>oldest_ymd) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb20-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id    latest_ymd oldest_ymd
 ##   &lt;chr&gt;               &lt;int&gt;      &lt;int&gt;
 ## 1 CS029212000033   20180621   20170318
@@ -435,8 +441,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb22-3" title="3"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> <span class="kw">median</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb22-4" title="4"><span class="st">    </span><span class="kw">arrange</span>(<span class="kw">desc</span>(amount)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb22-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:     lazy query [?? x 2]
-## # Database:   postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:     SQL [6 x 2]
+## # Database:   postgres  [guest@localhost:5432/knock100]
 ## # Ordered by: desc(amount)
 ##   store_cd amount
 ##   &lt;chr&gt;     &lt;dbl&gt;
@@ -457,8 +463,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb24-3" title="3"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">count =</span> <span class="kw">n</span>(), <span class="dt">.groups =</span> <span class="st">&quot;drop_last&quot;</span>) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb24-4" title="4"><span class="st">    </span><span class="kw">filter</span>(count <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(count, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb24-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ## # Groups:   store_cd
 ##   store_cd product_cd   count
 ##   &lt;chr&gt;    &lt;chr&gt;      &lt;int64&gt;
@@ -479,8 +485,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb26-3" title="3"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">sd =</span> <span class="kw">sd</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb26-4" title="4"><span class="st">    </span><span class="kw">arrange</span>(<span class="kw">desc</span>(sd)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb26-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:     lazy query [?? x 2]
-## # Database:   postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:     SQL [6 x 2]
+## # Database:   postgres  [guest@localhost:5432/knock100]
 ## # Ordered by: desc(sd)
 ##   store_cd    sd
 ##   &lt;chr&gt;    &lt;dbl&gt;
@@ -501,8 +507,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb28-3" title="3"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">total =</span> <span class="kw">mean</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb28-4" title="4"><span class="st">    </span><span class="kw">filter</span>(total <span class="op">&gt;=</span><span class="st"> </span><span class="dv">330</span>) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb28-5" title="5"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 2]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 2]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   store_cd total
 ##   &lt;chr&gt;    &lt;dbl&gt;
 ## 1 S13052    403.
@@ -519,8 +525,8 @@ code span.wa { color: #da4453; } /* Warning */
 </blockquote>
 <div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb30-1" title="1"><span class="kw">inner_join</span>(receipt_tbl, store_tbl, <span class="dt">by =</span> <span class="st">&quot;store_cd&quot;</span>) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb30-2" title="2"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 18]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 18]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   sales_ymd sales_epoch store_cd receipt_no receipt_sub_no customer_id   
 ##       &lt;int&gt;       &lt;int&gt; &lt;chr&gt;         &lt;int&gt;          &lt;int&gt; &lt;chr&gt;         
 ## 1  20181103  1541203200 S14006          112              1 CS006214000001
@@ -546,8 +552,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb32-5" title="5"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> <span class="kw">sum</span>(amount) <span class="op">%&gt;%</span><span class="st"> </span>dplyr<span class="op">::</span><span class="kw">coalesce</span>(<span class="dv">0</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb32-6" title="6"><span class="st">    </span><span class="kw">arrange</span>(<span class="kw">desc</span>(amount)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb32-7" title="7"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:     lazy query [?? x 2]
-## # Database:   postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:     SQL [6 x 2]
+## # Database:   postgres  [guest@localhost:5432/knock100]
 ## # Ordered by: desc(amount)
 ##   customer_id    amount
 ##   &lt;chr&gt;           &lt;dbl&gt;
@@ -604,8 +610,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb36-4" title="4"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">sales_yest =</span> sales_today <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">lag</span>()) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb36-5" title="5"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">diff =</span> sales_today <span class="op">-</span><span class="st"> </span>sales_yest) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb36-6" title="6"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 4]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 4]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   sales_ymd sales_today sales_yest    diff
 ##       &lt;int&gt;     &lt;int64&gt;    &lt;int64&gt; &lt;int64&gt;
 ## 1  20190504       49561         NA      NA
@@ -634,8 +640,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb38-12" title="12">        )</a>
 <a class="sourceLine" id="cb38-13" title="13">    ) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb38-14" title="14"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 5]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 5]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   sales_ymd sales_daily sales_daily_lag_1 sales_daily_lag_2 sales_daily_lag_3
 ##       &lt;int&gt;     &lt;int64&gt;           &lt;int64&gt;           &lt;int64&gt;           &lt;int64&gt;
 ## 1  20190504  2382479472                NA                NA                NA
@@ -700,8 +706,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb42-15" title="15">        <span class="dt">sales_other =</span> sales9</a>
 <a class="sourceLine" id="cb42-16" title="16">    ) -&gt;<span class="st"> </span>sales_summary</a>
 <a class="sourceLine" id="cb42-17" title="17">sales_summary</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 4]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [9 x 4]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   generation sales_male sales_female sales_other
 ##        &lt;dbl&gt;      &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt;
 ## 1         10       1591       149836        4317
@@ -727,8 +733,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb44-6" title="6">        <span class="dt">values_to =</span> <span class="st">&quot;sales_amount&quot;</span></a>
 <a class="sourceLine" id="cb44-7" title="7">    ) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb44-8" title="8"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   generation gender_cd sales_amount
 ##        &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt;
 ## 1         10 00                1591
@@ -753,8 +759,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb46-8" title="8"><span class="st">            </span><span class="kw">str_replace_all</span>(<span class="dt">pattern =</span> <span class="st">&quot;-&quot;</span>, <span class="dt">replacement =</span> <span class="st">&quot;&quot;</span>)</a>
 <a class="sourceLine" id="cb46-9" title="9">    ) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb46-10" title="10"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 2]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 2]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id    date    
 ##   &lt;chr&gt;          &lt;chr&gt;   
 ## 1 CS021313000114 19810429
@@ -772,8 +778,8 @@ code span.wa { color: #da4453; } /* Warning */
 <div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb48-1" title="1">customer_tbl <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb48-2" title="2"><span class="st">    </span><span class="kw">transmute</span>(customer_id, <span class="dt">application_date =</span> <span class="kw">as.Date</span>(application_date)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb48-3" title="3"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 2]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 2]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id    application_date
 ##   &lt;chr&gt;          &lt;date&gt;          
 ## 1 CS021313000114 2015-09-05      
@@ -794,8 +800,8 @@ code span.wa { color: #da4453; } /* Warning */
 <a class="sourceLine" id="cb50-4" title="4">        receipt_no, receipt_sub_no</a>
 <a class="sourceLine" id="cb50-5" title="5">    ) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb50-6" title="6"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   sales_date receipt_no receipt_sub_no
 ##   &lt;date&gt;          &lt;int&gt;          &lt;int&gt;
 ## 1 2018-11-03        112              1
@@ -824,8 +830,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb52-6" title="6"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> <span class="kw">sum</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb52-7" title="7"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">amount_over_2000 =</span> <span class="kw">if_else</span>(amount <span class="op">&gt;</span><span class="st"> </span><span class="dv">2000</span>, <span class="dv">1</span>, <span class="dv">0</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb52-8" title="8"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id     amount amount_over_2000
 ##   &lt;chr&gt;          &lt;int64&gt;            &lt;dbl&gt;
 ## 1 CS001311000059    2302                1
@@ -849,8 +855,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb54-7" title="7"><span class="st">    </span><span class="kw">group_by</span>(is_tokyo) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb54-8" title="8"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> <span class="kw">n_distinct</span>(customer_id)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb54-9" title="9"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 2]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [2 x 2]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   is_tokyo  amount
 ##      &lt;dbl&gt; &lt;int64&gt;
 ## 1        0    3906
@@ -934,8 +940,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb60-4" title="4">customer_generation <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb60-5" title="5"><span class="st">    </span><span class="kw">select</span>(customer_id, birth_day, generation) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb60-6" title="6"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id    birth_day  generation
 ##   &lt;chr&gt;          &lt;date&gt;          &lt;dbl&gt;
 ## 1 CS021313000114 1981-04-29         30
@@ -961,8 +967,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb62-9" title="9">        gender_generation</a>
 <a class="sourceLine" id="cb62-10" title="10">    ) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb62-11" title="11"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 6]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 6]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id    gender_cd gender   age generation gender_generation
 ##   &lt;chr&gt;              &lt;int&gt; &lt;chr&gt;  &lt;int&gt;      &lt;dbl&gt;             &lt;dbl&gt;
 ## 1 CS021313000114         1 女性      37         30                31
@@ -986,8 +992,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb64-7" title="7">        <span class="dt">values_from =</span> value,</a>
 <a class="sourceLine" id="cb64-8" title="8">        <span class="dt">values_fill =</span> <span class="dv">0</span></a>
 <a class="sourceLine" id="cb64-9" title="9">    )</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 4]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [?? x 4]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##    customer_id    gender_cd0 gender_cd9 gender_cd1
 ##    &lt;chr&gt;               &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
 ##  1 CS001105000001          1          0          0
@@ -1016,8 +1022,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb66-6" title="6"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> <span class="kw">sum</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb66-7" title="7"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">std_amount =</span> (amount <span class="op">-</span><span class="st"> </span><span class="kw">mean</span>(amount)) <span class="op">/</span><span class="st"> </span><span class="kw">sd</span>(amount)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb66-8" title="8"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   customer_id     amount std_amount
 ##   &lt;chr&gt;          &lt;int64&gt;      &lt;dbl&gt;
 ## 1 CS001311000059    2302    -0.0903
@@ -1059,8 +1065,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb70-6" title="6"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> <span class="kw">sum</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb70-7" title="7"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">relative_pos =</span> <span class="kw">as.numeric</span>((amount <span class="op">-</span><span class="st"> </span><span class="kw">min</span>(amount))) <span class="op">/</span><span class="st"> </span>(<span class="kw">max</span>(amount) <span class="op">-</span><span class="st"> </span><span class="kw">min</span>(amount))) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb70-8" title="8"><span class="st">    </span><span class="kw">head</span>(<span class="dv">10</span>)</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [10 x 3]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##    customer_id     amount relative_pos
 ##    &lt;chr&gt;          &lt;int64&gt;        &lt;dbl&gt;
 ##  1 CS001311000059    2302      0.0970 
@@ -1090,8 +1096,8 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb72-8" title="8"><span class="st">    </span><span class="kw">filter</span>(amount_canned <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb72-9" title="9"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">canned_ratio =</span> <span class="kw">as.numeric</span>(amount_canned) <span class="op">/</span><span class="st"> </span>amount_total) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb72-10" title="10"><span class="st">    </span><span class="kw">head</span>(<span class="dv">10</span>)</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 4]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [10 x 4]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##    customer_id    amount_canned amount_total canned_ratio
 ##    &lt;chr&gt;                  &lt;dbl&gt;      &lt;int64&gt;        &lt;dbl&gt;
 ##  1 CS001113000004          1298         1298        1    
@@ -1183,28 +1189,25 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <blockquote>
 <p>商品データ（df_product）の各項目に対し、欠損数を確認せよ。</p>
 </blockquote>
-<p>やりたいことは最終行だが, そのためにはデータをダウンロードする必要があるので, その前に <code>NA</code> を含む行だけに絞り込んでデータサイズを落とす処理を入れた.</p>
 <div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb80-1" title="1">product_tbl <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb80-2" title="2"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">if_any</span>(<span class="op">-</span><span class="kw">c</span>(), <span class="op">~</span><span class="st"> </span><span class="kw">is.na</span>(.))) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb80-3" title="3"><span class="st">    </span><span class="kw">collect</span>() <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb80-4" title="4"><span class="st">    </span><span class="kw">summarise</span>(<span class="kw">across</span>(<span class="kw">everything</span>(), <span class="op">~</span><span class="st"> </span><span class="kw">is.na</span>(.) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sum</span>()))</a></code></pre></div>
-<pre><code>## # A tibble: 1 × 6
-##   product_cd category_major_cd category_medium_cd category_small_cd unit_price
-##        &lt;int&gt;             &lt;int&gt;              &lt;int&gt;             &lt;int&gt;      &lt;int&gt;
-## 1          0                 0                  0                 0          7
-## # … with 1 more variable: unit_cost &lt;int&gt;</code></pre>
+<a class="sourceLine" id="cb80-2" title="2"><span class="st">    </span><span class="kw">summarise</span>(<span class="kw">across</span>(<span class="dt">.cols =</span> <span class="kw">everything</span>(), <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">if_else</span>(<span class="kw">is.na</span>(.x), <span class="dv">1</span>, <span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sum</span>(), <span class="dt">.names =</span> <span class="st">&quot;{.col}_NA&quot;</span>))</a></code></pre></div>
+<pre><code>## # Source:   SQL [1 x 6]
+## # Database: postgres  [guest@localhost:5432/knock100]
+##   product_cd_NA category_major_… category_medium… category_small_… unit_price_NA
+##           &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;
+## 1             0                0                0                0             7
+## # … with 1 more variable: unit_cost_NA &lt;dbl&gt;</code></pre>
 </div>
 <div id="r-080" class="section level2 unnumbered hasAnchor">
 <h2>R-080<a href="#r-080" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <blockquote>
 <p>商品データ（df_product）のいずれかの項目に欠損が発生しているレコードを全て削除した新たな商品データを作成せよ。なお、削除前後の件数を表示させ、079で確認した件数だけ減少していることも確認すること。</p>
 </blockquote>
-<p>R079 の絞り込み処理を反転させるだけ.</p>
 <div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb82-1" title="1">product_tbl <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb82-2" title="2"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">if_all</span>(<span class="op">-</span><span class="kw">c</span>(), <span class="op">~</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(.))) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb82-2" title="2"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">if_all</span>(<span class="kw">everything</span>(), <span class="op">~</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(.))) <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb82-3" title="3"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 6]
-## # Database: postgres [guest@localhost:5432/knock100]
+<pre><code>## # Source:   SQL [6 x 6]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##   product_cd category_major_cd category_medium_cd category_small_cd unit_price
 ##   &lt;chr&gt;      &lt;chr&gt;             &lt;chr&gt;              &lt;chr&gt;                  &lt;int&gt;
 ## 1 P040101001 04                0401               040101                   198
@@ -1214,7 +1217,7 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 ## 5 P040101005 04                0401               040101                   268
 ## 6 P040101006 04                0401               040101                   298
 ## # … with 1 more variable: unit_cost &lt;int&gt;</code></pre>
-<p>データを手元にダウンロードしていいなら <code>complete.cases</code>が手軽.</p>
+<p>データを手元にダウンロードしていいなら <code>complete.cases</code>も手軽.</p>
 <div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb84-1" title="1">product_tbl <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb84-2" title="2"><span class="st">    </span><span class="kw">collect</span>() <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb84-3" title="3"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">complete.cases</span>(.)) <span class="op">%&gt;%</span></a>
@@ -1237,9 +1240,9 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <p>単価（unit_price）と原価（unit_cost）の欠損値について、それぞれの平均値で補完した新たな商品データを作成せよ。なお、平均値については1円未満を丸めること（四捨五入または偶数への丸めで良い）。補完実施後、各項目について欠損が生じていないことも確認すること。</p>
 </blockquote>
 <div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb86-1" title="1">product_tbl <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb86-2" title="2"><span class="st">    </span><span class="kw">mutate</span>(<span class="kw">across</span>(<span class="kw">c</span>(unit_price, unit_cost), <span class="op">~</span><span class="st"> </span><span class="kw">coalesce</span>(.x, <span class="kw">mean</span>(.x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">round</span>())))</a></code></pre></div>
-<pre><code>## # Source:   lazy query [?? x 6]
-## # Database: postgres [guest@localhost:5432/knock100]
+<a class="sourceLine" id="cb86-2" title="2"><span class="st">    </span><span class="kw">mutate</span>(<span class="kw">across</span>(<span class="kw">starts_with</span>(<span class="st">&quot;unit_&quot;</span>), <span class="op">~</span><span class="st"> </span><span class="kw">coalesce</span>(.x, <span class="kw">mean</span>(.x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">round</span>())))</a></code></pre></div>
+<pre><code>## # Source:   SQL [?? x 6]
+## # Database: postgres  [guest@localhost:5432/knock100]
 ##    product_cd category_major_cd category_medium_cd category_small_cd unit_price
 ##    &lt;chr&gt;      &lt;chr&gt;             &lt;chr&gt;              &lt;chr&gt;                  &lt;dbl&gt;
 ##  1 P040101001 04                0401               040101                   198
@@ -1272,7 +1275,7 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 <a class="sourceLine" id="cb88-4" title="4"><span class="st">    </span>dplyr<span class="op">::</span><span class="kw">group_modify</span>(<span class="op">~</span><span class="st"> </span><span class="kw">mutate</span>(</a>
 <a class="sourceLine" id="cb88-5" title="5">        .x,</a>
 <a class="sourceLine" id="cb88-6" title="6">        <span class="kw">across</span>(</a>
-<a class="sourceLine" id="cb88-7" title="7">            <span class="dt">.cols =</span> <span class="kw">c</span>(unit_price, unit_cost),</a>
+<a class="sourceLine" id="cb88-7" title="7">            <span class="dt">.cols =</span> <span class="kw">starts_with</span>(<span class="st">&quot;unit_&quot;</span>),</a>
 <a class="sourceLine" id="cb88-8" title="8">            <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">coalesce</span>(.x, <span class="kw">median</span>(.x, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">round</span>())</a>
 <a class="sourceLine" id="cb88-9" title="9">        )</a>
 <a class="sourceLine" id="cb88-10" title="10">    )) <span class="op">%&gt;%</span></a>
@@ -1298,72 +1301,168 @@ R で日付を扱うパッケージとしては lubridate などがあるが, db
 </ul>
 <p>具体的な作業として面倒なのは, <code>group_modify</code> の <code>coalesce</code> の 2 引数目.
 例として, <code>.x</code> が <code>unit_price</code> のときを考える. 2 引数目には, 同じカテゴリの <code>unit_price_med</code> が来て欲しい. そこで, <code>cur_data()</code> で現在処理中のテーブル (これは <code>group_modify</code> によってリストに分割されたカテゴリごとの小テーブルである)を, <code>cur_column()</code> で現在処理中のカラム名をそれぞれ取得して, <code>summarise(across("unit_price_med", first))</code> としてこの列の最初の行の値を取ってきている. 各小テーブル内では, <code>xxxx_xxxx_med</code> の値は定数なので, サンプルする行はどこでもよい.</p>
-<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb90-1" title="1">product_tbl <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-2" title="2"><span class="st">    </span><span class="kw">group_by</span>(category_small_cd) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-3" title="3"><span class="st">    </span><span class="co"># calculate median for each category</span></a>
-<a class="sourceLine" id="cb90-4" title="4"><span class="st">    </span><span class="kw">summarise</span>(</a>
-<a class="sourceLine" id="cb90-5" title="5">        <span class="kw">across</span>(</a>
-<a class="sourceLine" id="cb90-6" title="6">            <span class="dt">.cols =</span> <span class="kw">c</span>(unit_price, unit_cost),</a>
-<a class="sourceLine" id="cb90-7" title="7">            <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">median</span>(.x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">round</span>(),</a>
-<a class="sourceLine" id="cb90-8" title="8">            <span class="dt">.names =</span> <span class="st">&quot;{.col}_med&quot;</span></a>
-<a class="sourceLine" id="cb90-9" title="9">        )</a>
-<a class="sourceLine" id="cb90-10" title="10">    ) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-11" title="11"><span class="st">    </span><span class="co"># combine median and rows with missing value</span></a>
-<a class="sourceLine" id="cb90-12" title="12"><span class="st">    </span><span class="kw">inner_join</span>(product_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(<span class="kw">if_any</span>(<span class="op">-</span><span class="kw">c</span>(), <span class="op">~</span><span class="st"> </span><span class="kw">is.na</span>(.))), <span class="dt">by =</span> <span class="st">&quot;category_small_cd&quot;</span>) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-13" title="13"><span class="st">    </span><span class="kw">collect</span>() <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-14" title="14"><span class="st">    </span><span class="kw">group_by</span>(category_small_cd) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-15" title="15"><span class="st">    </span><span class="kw">group_modify</span>(</a>
-<a class="sourceLine" id="cb90-16" title="16">        <span class="op">~</span><span class="st"> </span><span class="kw">mutate</span>(</a>
-<a class="sourceLine" id="cb90-17" title="17">            .x,</a>
-<a class="sourceLine" id="cb90-18" title="18">            <span class="kw">across</span>(</a>
-<a class="sourceLine" id="cb90-19" title="19">                <span class="dt">.cols =</span> <span class="kw">c</span>(unit_price, unit_cost),</a>
-<a class="sourceLine" id="cb90-20" title="20">                <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">coalesce</span>(.x, <span class="kw">cur_data</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarise</span>(<span class="kw">across</span>(stringr<span class="op">::</span><span class="kw">str_c</span>(<span class="kw">cur_column</span>(), <span class="st">&quot;_med&quot;</span>), first)) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">collect</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">as.numeric</span>())</a>
-<a class="sourceLine" id="cb90-21" title="21">            )</a>
-<a class="sourceLine" id="cb90-22" title="22">        )</a>
-<a class="sourceLine" id="cb90-23" title="23">    ) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-24" title="24"><span class="st">    </span><span class="kw">select</span>(<span class="op">-</span><span class="kw">ends_with</span>(<span class="st">&quot;_med&quot;</span>)) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-25" title="25"><span class="st">    </span><span class="co"># temporarily save table in server. see &quot;copy_to&quot;</span></a>
-<a class="sourceLine" id="cb90-26" title="26"><span class="st">    </span><span class="kw">copy_to</span>(con, ., <span class="dt">name =</span> <span class="st">&quot;product_sub_imputed&quot;</span>, <span class="dt">overwrite =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb90-27" title="27">product_tbl <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-28" title="28"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">if_all</span>(<span class="op">-</span><span class="kw">c</span>(), <span class="op">~</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(.))) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-29" title="29"><span class="st">    </span><span class="kw">copy_to</span>(con, ., <span class="dt">name =</span> <span class="st">&quot;product_sub_nonimputed&quot;</span>, <span class="dt">overwrite =</span> <span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb90-30" title="30"></a>
-<a class="sourceLine" id="cb90-31" title="31"><span class="co"># combine and show</span></a>
-<a class="sourceLine" id="cb90-32" title="32"><span class="co"># view also lives temporarily</span></a>
-<a class="sourceLine" id="cb90-33" title="33">DBI<span class="op">::</span><span class="kw">dbSendQuery</span>(con, <span class="st">&quot;</span></a>
-<a class="sourceLine" id="cb90-34" title="34"><span class="st">    create view product_imputed as</span></a>
-<a class="sourceLine" id="cb90-35" title="35"><span class="st">    select *</span></a>
-<a class="sourceLine" id="cb90-36" title="36"><span class="st">    from product_sub_imputed</span></a>
-<a class="sourceLine" id="cb90-37" title="37"><span class="st">    union all</span></a>
-<a class="sourceLine" id="cb90-38" title="38"><span class="st">    select *</span></a>
-<a class="sourceLine" id="cb90-39" title="39"><span class="st">    from product_sub_nonimputed</span></a>
-<a class="sourceLine" id="cb90-40" title="40"><span class="st">&quot;</span>)</a>
-<a class="sourceLine" id="cb90-41" title="41"><span class="co">## </span><span class="al">NOTICE</span><span class="co">:  view &quot;product_imputed&quot; will be a temporary view</span></a>
-<a class="sourceLine" id="cb90-42" title="42"><span class="co">## &lt;PqResult&gt;</span></a>
-<a class="sourceLine" id="cb90-43" title="43"><span class="co">##   SQL  </span></a>
-<a class="sourceLine" id="cb90-44" title="44"><span class="co">##  create view product_imputed as</span></a>
-<a class="sourceLine" id="cb90-45" title="45"><span class="co">##  select *</span></a>
-<a class="sourceLine" id="cb90-46" title="46"><span class="co">##  from product_sub_imputed</span></a>
-<a class="sourceLine" id="cb90-47" title="47"><span class="co">##  union all</span></a>
-<a class="sourceLine" id="cb90-48" title="48"><span class="co">##  select *</span></a>
-<a class="sourceLine" id="cb90-49" title="49"><span class="co">##  from product_sub_nonimputed</span></a>
-<a class="sourceLine" id="cb90-50" title="50"><span class="co">## </span></a>
-<a class="sourceLine" id="cb90-51" title="51"><span class="co">##   ROWS Fetched: 0 [complete]</span></a>
-<a class="sourceLine" id="cb90-52" title="52"><span class="co">##        Changed: 0</span></a>
-<a class="sourceLine" id="cb90-53" title="53"><span class="co"># show tables available now</span></a>
-<a class="sourceLine" id="cb90-54" title="54">DBI<span class="op">::</span><span class="kw">dbListTables</span>(con)</a>
-<a class="sourceLine" id="cb90-55" title="55"><span class="co">## [1] &quot;customer&quot;               &quot;category&quot;               &quot;geocode&quot;               </span></a>
-<a class="sourceLine" id="cb90-56" title="56"><span class="co">## [4] &quot;product&quot;                &quot;receipt&quot;                &quot;store&quot;                 </span></a>
-<a class="sourceLine" id="cb90-57" title="57"><span class="co">## [7] &quot;product_sub_imputed&quot;    &quot;product_sub_nonimputed&quot; &quot;product_imputed&quot;</span></a>
-<a class="sourceLine" id="cb90-58" title="58"><span class="co"># check the numebr of non-misssing rows</span></a>
-<a class="sourceLine" id="cb90-59" title="59"><span class="kw">tbl</span>(con, <span class="st">&quot;product_imputed&quot;</span>) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-60" title="60"><span class="st">    </span><span class="kw">filter</span>(<span class="kw">if_all</span>(<span class="op">-</span><span class="kw">c</span>(), <span class="op">~</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(.))) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb90-61" title="61"><span class="st">    </span><span class="kw">summarise</span>(<span class="kw">n</span>())</a>
-<a class="sourceLine" id="cb90-62" title="62"><span class="co">## # Source:   lazy query [?? x 1]</span></a>
-<a class="sourceLine" id="cb90-63" title="63"><span class="co">## # Database: postgres [guest@localhost:5432/knock100]</span></a>
-<a class="sourceLine" id="cb90-64" title="64"><span class="co">##     `n()`</span></a>
-<a class="sourceLine" id="cb90-65" title="65"><span class="co">##   &lt;int64&gt;</span></a>
-<a class="sourceLine" id="cb90-66" title="66"><span class="co">## 1   10030</span></a></code></pre></div>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb90-1" title="1">rows_to_impute &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;unit_price&quot;</span>, <span class="st">&quot;unit_cost&quot;</span>)</a>
+<a class="sourceLine" id="cb90-2" title="2">product_tbl <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-3" title="3"><span class="st">    </span><span class="kw">group_by</span>(category_small_cd) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-4" title="4"><span class="st">    </span><span class="co"># calculate median for each category</span></a>
+<a class="sourceLine" id="cb90-5" title="5"><span class="st">    </span><span class="kw">summarise</span>(</a>
+<a class="sourceLine" id="cb90-6" title="6">        <span class="kw">across</span>(</a>
+<a class="sourceLine" id="cb90-7" title="7">            <span class="dt">.cols =</span> <span class="kw">all_of</span>(rows_to_impute),</a>
+<a class="sourceLine" id="cb90-8" title="8">            <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">median</span>(.x) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">round</span>(),</a>
+<a class="sourceLine" id="cb90-9" title="9">            <span class="dt">.names =</span> <span class="st">&quot;{.col}_med&quot;</span></a>
+<a class="sourceLine" id="cb90-10" title="10">        )</a>
+<a class="sourceLine" id="cb90-11" title="11">    ) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-12" title="12"><span class="st">    </span><span class="co"># combine median and rows with missing value</span></a>
+<a class="sourceLine" id="cb90-13" title="13"><span class="st">    </span><span class="kw">inner_join</span>(product_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(<span class="kw">if_any</span>(<span class="kw">everything</span>(), <span class="op">~</span><span class="st"> </span><span class="kw">is.na</span>(.))), <span class="dt">by =</span> <span class="st">&quot;category_small_cd&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-14" title="14"><span class="st">    </span><span class="kw">collect</span>() <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-15" title="15"><span class="st">    </span><span class="kw">group_by</span>(category_small_cd) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-16" title="16"><span class="st">    </span><span class="kw">group_modify</span>(</a>
+<a class="sourceLine" id="cb90-17" title="17">        <span class="op">~</span><span class="st"> </span><span class="kw">mutate</span>(</a>
+<a class="sourceLine" id="cb90-18" title="18">            .x,</a>
+<a class="sourceLine" id="cb90-19" title="19">            <span class="kw">across</span>(</a>
+<a class="sourceLine" id="cb90-20" title="20">                <span class="dt">.cols =</span> <span class="kw">all_of</span>(rows_to_impute),</a>
+<a class="sourceLine" id="cb90-21" title="21">                <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">coalesce</span>(.x, <span class="kw">cur_data</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarise</span>(<span class="kw">across</span>(stringr<span class="op">::</span><span class="kw">str_c</span>(<span class="kw">cur_column</span>(), <span class="st">&quot;_med&quot;</span>), first)) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">collect</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">as.numeric</span>())</a>
+<a class="sourceLine" id="cb90-22" title="22">            )</a>
+<a class="sourceLine" id="cb90-23" title="23">        )</a>
+<a class="sourceLine" id="cb90-24" title="24">    ) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-25" title="25"><span class="st">    </span><span class="kw">select</span>(<span class="op">-</span><span class="kw">ends_with</span>(<span class="st">&quot;_med&quot;</span>)) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-26" title="26"><span class="st">    </span><span class="co"># copy_to method temporarily saves table in server</span></a>
+<a class="sourceLine" id="cb90-27" title="27"><span class="st">    </span><span class="kw">copy_to</span>(con, ., <span class="dt">overwrite =</span> <span class="ot">TRUE</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-28" title="28"><span class="st">    </span><span class="co"># then merge tables</span></a>
+<a class="sourceLine" id="cb90-29" title="29"><span class="st">    </span>dplyr<span class="op">::</span><span class="kw">union</span>(product_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(<span class="kw">if_all</span>(<span class="kw">everything</span>(), <span class="op">~</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(.)))) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb90-30" title="30"><span class="st">    </span><span class="co"># make sure that the merged table has no missing cells</span></a>
+<a class="sourceLine" id="cb90-31" title="31"><span class="st">    </span><span class="kw">summarise</span>(<span class="kw">across</span>(<span class="dt">.cols =</span> <span class="kw">everything</span>(), <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">if_else</span>(<span class="kw">is.na</span>(.x), <span class="dv">1</span>, <span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sum</span>(), <span class="dt">.names =</span> <span class="st">&quot;{.col}_NA&quot;</span>))</a></code></pre></div>
+<pre><code>## # Source:   SQL [1 x 6]
+## # Database: postgres  [guest@localhost:5432/knock100]
+##   category_small_… product_cd_NA category_major_… category_medium… unit_price_NA
+##              &lt;dbl&gt;         &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;
+## 1                0             0                0                0             0
+## # … with 1 more variable: unit_cost_NA &lt;dbl&gt;</code></pre>
+</div>
+<div id="r-084" class="section level2 unnumbered hasAnchor">
+<h2>R-084<a href="#r-084" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>顧客データ（df_customer）の全顧客に対して全期間の売上金額に占める2019年売上金額の割合を計算し、新たなデータを作成せよ。ただし、売上実績がない場合は0として扱うこと。そして計算した割合が0超のものを抽出し、結果を10件表示せよ。また、作成したデータに欠損が存在しないことを確認せよ。</p>
+</blockquote>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb92-1" title="1">receipt_tbl <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-2" title="2"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">year =</span> sales_ymd <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">as.character</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">substr</span>(<span class="dv">1</span>, <span class="dv">4</span>)) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-3" title="3"><span class="st">    </span><span class="kw">group_by</span>(customer_id) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-4" title="4"><span class="st">    </span><span class="kw">summarise</span>(</a>
+<a class="sourceLine" id="cb92-5" title="5">        <span class="dt">amount_all =</span> <span class="kw">sum</span>(amount, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>),</a>
+<a class="sourceLine" id="cb92-6" title="6">        <span class="dt">amount_2019 =</span> <span class="kw">sum</span>(<span class="kw">if_else</span>(year <span class="op">==</span><span class="st"> &quot;2019&quot;</span>, <span class="kw">coalesce</span>(amount, <span class="dv">0</span>), <span class="dv">0</span>), <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb92-7" title="7">    ) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-8" title="8"><span class="st">    </span><span class="kw">right_join</span>(customer_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(customer_id), <span class="dt">by =</span> <span class="st">&quot;customer_id&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-9" title="9"><span class="st">    </span><span class="kw">mutate</span>(<span class="kw">across</span>(</a>
+<a class="sourceLine" id="cb92-10" title="10">        <span class="dt">.cols =</span> <span class="kw">starts_with</span>(<span class="st">&quot;amount&quot;</span>),</a>
+<a class="sourceLine" id="cb92-11" title="11">        <span class="dt">.fns =</span> <span class="op">~</span><span class="st"> </span><span class="kw">coalesce</span>(.x, <span class="fl">.0</span>)</a>
+<a class="sourceLine" id="cb92-12" title="12">    )) <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># the first of asked data</span></a>
+<a class="sourceLine" id="cb92-13" title="13"><span class="st">    </span><span class="kw">filter</span>(amount_<span class="dv">2019</span> <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-14" title="14"><span class="st">    </span><span class="co"># the second one</span></a>
+<a class="sourceLine" id="cb92-15" title="15"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">ratio_2019 =</span> amount_<span class="dv">2019</span> <span class="op">/</span><span class="st"> </span>amount_all) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb92-16" title="16"><span class="st">    </span><span class="kw">head</span>()</a></code></pre></div>
+<pre><code>## # Source:   SQL [6 x 4]
+## # Database: postgres  [guest@localhost:5432/knock100]
+##   customer_id    amount_all amount_2019 ratio_2019
+##   &lt;chr&gt;               &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;
+## 1 CS031415000172       5088        2971     0.584 
+## 2 CS015414000103       3122         874     0.280 
+## 3 CS011215000048       3444         248     0.0720
+## 4 CS029415000023       5167        3767     0.729 
+## 5 CS035415000029       7504        5823     0.776 
+## 6 CS023513000066        771         208     0.270</code></pre>
+</div>
+<div id="r-087" class="section level2 unnumbered hasAnchor">
+<h2>R-087<a href="#r-087" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>顧客データ（df_customer）では、異なる店舗での申込みなどにより同一顧客が複数登録されている。名前（customer_name）と郵便番号（postal_cd）が同じ顧客は同一顧客とみなして1顧客1レコードとなるように名寄せした名寄顧客データを作成し、顧客データの件数、名寄顧客データの件数、重複数を算出せよ。ただし、同一顧客に対しては売上金額合計が最も高いものを残し、売上金額合計が同一もしくは売上実績がない顧客については顧客ID（customer_id）の番号が小さいものを残すこととする。</p>
+</blockquote>
+<p>dbplyr のバージョンが古いと <code>distinct</code> の <code>.keep_all = TRUE</code> でエラーが出るかも. バージョン 2.2.1 では大丈夫だった.</p>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb94-1" title="1">customer_tbl_u &lt;-<span class="st"> </span>customer_tbl <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-2" title="2"><span class="st">    </span><span class="kw">left_join</span>(receipt_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(customer_id, amount), <span class="dt">by =</span> <span class="st">&quot;customer_id&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-3" title="3"><span class="st">    </span><span class="kw">group_by</span>(<span class="kw">across</span>(<span class="kw">all_of</span>(customer_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">colnames</span>()))) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-4" title="4"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">sales_amount =</span> amount <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sum</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">coalesce</span>(<span class="dv">0</span>), <span class="dt">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-5" title="5"><span class="st">    </span><span class="kw">group_by</span>(customer_name, postal_cd) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-6" title="6"><span class="st">    </span><span class="kw">window_order</span>(<span class="kw">desc</span>(sales_amount), customer_id) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-7" title="7"><span class="st">    </span><span class="kw">distinct</span>(customer_name, postal_cd, <span class="dt">.keep_all =</span> <span class="ot">TRUE</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb94-8" title="8"><span class="st">    </span><span class="kw">ungroup</span>()</a>
+<a class="sourceLine" id="cb94-9" title="9"></a>
+<a class="sourceLine" id="cb94-10" title="10">customer_tbl_u <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarise</span>(<span class="kw">n</span>())</a></code></pre></div>
+<pre><code>## # Source:     SQL [1 x 1]
+## # Database:   postgres  [guest@localhost:5432/knock100]
+## # Ordered by: desc(sales_amount), customer_id
+##     `n()`
+##   &lt;int64&gt;
+## 1   21941</code></pre>
+</div>
+<div id="r-089" class="section level2 unnumbered hasAnchor">
+<h2>R-089<a href="#r-089" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>売上実績がある顧客を、予測モデル構築のため学習用データとテスト用データに分割したい。それぞれ8:2の割合でランダムにデータを分割せよ。</p>
+</blockquote>
+<p>データをダウンロードせずに処理を片付けたいので, 公式回答のように <code>rsample::initial_split</code> を使わずに <code>dplyr::slice_sample()</code> でゴリ押しする.
+dbplyr の現バージョンだと, <code>dplyr::slice_sample()</code> の <code>prop =</code> 変数を受け入れてくれないので, サンプルサイズ <code>n =</code> を直接指定している.</p>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb96-1" title="1">customer_with_sales_history &lt;-<span class="st"> </span>receipt_tbl <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-2" title="2"><span class="st">    </span><span class="kw">group_by</span>(customer_id) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-3" title="3"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">sales_amount =</span> amount <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sum</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>), <span class="dt">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-4" title="4"><span class="st">    </span><span class="kw">filter</span>(sales_amount <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb96-5" title="5"></a>
+<a class="sourceLine" id="cb96-6" title="6">count_rows &lt;-<span class="st"> </span><span class="cf">function</span>(table) {</a>
+<a class="sourceLine" id="cb96-7" title="7">    table <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-8" title="8"><span class="st">        </span><span class="kw">summarise</span>(<span class="kw">n</span>()) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-9" title="9"><span class="st">        </span><span class="kw">collect</span>() <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-10" title="10"><span class="st">        </span><span class="kw">data.frame</span>() <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-11" title="11"><span class="st">        </span>.[<span class="dv">1</span>, <span class="dv">1</span>] <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb96-12" title="12"><span class="st">        </span><span class="kw">as.double</span>()</a>
+<a class="sourceLine" id="cb96-13" title="13">}</a>
+<a class="sourceLine" id="cb96-14" title="14"></a>
+<a class="sourceLine" id="cb96-15" title="15">N &lt;-<span class="st"> </span>customer_with_sales_history <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">count_rows</span>()</a>
+<a class="sourceLine" id="cb96-16" title="16"></a>
+<a class="sourceLine" id="cb96-17" title="17">data_test &lt;-<span class="st"> </span>customer_with_sales_history <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice_sample</span>(<span class="dt">n =</span> <span class="fl">0.2</span> <span class="op">*</span><span class="st"> </span>N, <span class="dt">replace =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb96-18" title="18">data_train &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">setdiff</span>(customer_with_sales_history, data_test)</a>
+<a class="sourceLine" id="cb96-19" title="19"></a>
+<a class="sourceLine" id="cb96-20" title="20"><span class="st">&quot;size of N:&quot;</span> <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">paste</span>(N)</a>
+<a class="sourceLine" id="cb96-21" title="21"><span class="co">## [1] &quot;size of N: 8307&quot;</span></a>
+<a class="sourceLine" id="cb96-22" title="22"><span class="st">&quot;ratio of training data:&quot;</span> <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">paste</span>(<span class="kw">count_rows</span>(data_train) <span class="op">/</span><span class="st"> </span>N)</a>
+<a class="sourceLine" id="cb96-23" title="23"><span class="co">## [1] &quot;ratio of training data: 0.800048152160828&quot;</span></a>
+<a class="sourceLine" id="cb96-24" title="24"><span class="st">&quot;ratio of test data:&quot;</span> <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">paste</span>(<span class="kw">count_rows</span>(data_test) <span class="op">/</span><span class="st"> </span>N)</a>
+<a class="sourceLine" id="cb96-25" title="25"><span class="co">## [1] &quot;ratio of test data: 0.199951847839172&quot;</span></a></code></pre></div>
+</div>
+<div id="r-091" class="section level2 unnumbered hasAnchor">
+<h2>R-091<a href="#r-091" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>顧客データ（df_customer）の各顧客に対し、売上実績がある顧客数と売上実績がない顧客数が1:1となるようにアンダーサンプリングで抽出せよ。</p>
+</blockquote>
+<p>アンダーサンプリングの実行方法は全問と同様.
+最後に, サンプリング結果を公式回答のように1つのテーブルに結合した.</p>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb97-1" title="1">customer_sales_amount &lt;-<span class="st"> </span>customer_tbl <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-2" title="2"><span class="st">    </span><span class="kw">left_join</span>(receipt_tbl <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(customer_id, amount), <span class="dt">by =</span> <span class="st">&quot;customer_id&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-3" title="3"><span class="st">    </span><span class="kw">group_by</span>(customer_id) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-4" title="4"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">amount =</span> amount <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sum</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">coalesce</span>(<span class="dv">0</span>), <span class="dt">.groups =</span> <span class="st">&quot;drop&quot;</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-5" title="5"><span class="st">    </span><span class="kw">mutate</span>(<span class="dt">purchase =</span> <span class="kw">if_else</span>(amount <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>))</a>
+<a class="sourceLine" id="cb97-6" title="6"></a>
+<a class="sourceLine" id="cb97-7" title="7">customer_with_sales_history &lt;-<span class="st"> </span>customer_sales_amount <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(amount <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb97-8" title="8"></a>
+<a class="sourceLine" id="cb97-9" title="9"><span class="co"># size of down sampling</span></a>
+<a class="sourceLine" id="cb97-10" title="10">size &lt;-<span class="st"> </span><span class="kw">count_rows</span>(customer_sales_amount) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">min</span>(customer_with_sales_history <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">count_rows</span>())</a>
+<a class="sourceLine" id="cb97-11" title="11"></a>
+<a class="sourceLine" id="cb97-12" title="12"><span class="co"># union each of sampled group</span></a>
+<a class="sourceLine" id="cb97-13" title="13">down_samples_tbl &lt;-<span class="st"> </span>customer_sales_amount <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-14" title="14"><span class="st">    </span><span class="kw">filter</span>(amount <span class="op">==</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-15" title="15"><span class="st">    </span><span class="kw">slice_sample</span>(<span class="dt">n =</span> size) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-16" title="16"><span class="st">    </span>dplyr<span class="op">::</span><span class="kw">union</span>(customer_with_sales_history <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice_sample</span>(<span class="dt">n =</span> size))</a>
+<a class="sourceLine" id="cb97-17" title="17"></a>
+<a class="sourceLine" id="cb97-18" title="18">down_samples_tbl <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-19" title="19"><span class="st">    </span><span class="kw">group_by</span>(purchase) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb97-20" title="20"><span class="st">    </span><span class="kw">summarise</span>(<span class="dt">n =</span> <span class="kw">n</span>())</a></code></pre></div>
+<pre><code>## # Source:   SQL [2 x 2]
+## # Database: postgres  [guest@localhost:5432/knock100]
+##   purchase       n
+##      &lt;dbl&gt; &lt;int64&gt;
+## 1        1    8306
+## 2        0    8306</code></pre>
+</div>
+<div id="おまけ-処理結果の-db-への保存" class="section level2 hasAnchor">
+<h2><span class="header-section-number">3.2</span> おまけ: 処理結果の DB への保存<a href="#おまけ-処理結果の-db-への保存" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 
 </div>
 </div>

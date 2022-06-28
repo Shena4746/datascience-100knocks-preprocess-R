@@ -43,7 +43,7 @@ con <- DBI::dbConnect(
 
 ```{r example2-connect-to-DB, eval=FALSE}
 con <- DBI::dbConnect(
-    RPostgre::Postgres(),
+    RPostgres::Postgres(),
     host = "localhost",
     port = 5432,
     dbname = "your-database-name",
@@ -88,3 +88,5 @@ receipt_tbl %>%
 ```
 
 この `customer_tbl` 等の参照を使って dplyr の文法でデータ加工処理を書いていく.
+
+\newpage

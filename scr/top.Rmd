@@ -18,11 +18,10 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 # 前置き
 
 ## 概要
-このドキュメントは, [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess) を R で解いた記録. dbplyr パッケージを利用して, 手元にデータをダウンロードせず, できるだけローカルの計算資源に依存しない方針をとる. 
+このドキュメントは, [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess) を R で解いた記録. dbplyr パッケージを利用して, 手元にデータをダウンロードせず, できるだけローカルの計算資源に依存しない方針をとる. なお, 全問の回答は載せていない. 特に, SQL の方が楽にできる問題や公式回答と似た回答になった問題の多くはスキップしている.
 
-:::note
-全問の回答は載せていない. 特に, SQL の方が楽にできる問題はスキップしている.
-:::
+以下の記事は大変参考にさせていただきました. 公開に感謝します.
+[【R】データサイエンス100本ノック（構造化データ加工編）をtidyverseでやった](https://qiita.com/eitsupi/items/ae0476605cbaa3b04fc7)
 
 ## dbplyr とは
 
@@ -34,3 +33,5 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, クエリの実行コストはサーバー側が持ってくれる. dbplyr で SQL に翻訳可能なコードのみ利用可能. したがって, 手元にデータを直接ダウンロードした場合に比べて, 必然的に道具立ては少なくなる. なお, この翻訳可能性は個別のコード単位で決定されるものであり, パッケージ単位で決まっているわけではない. この翻訳問題を回避するには, `dplyr::collect()` を使ってクエリ実行後の実データをダウンロードする必要があるが, それが一般に可能なのは `summarise()` などでデータサイズが十分に小さくなった場合であろう.
 
 `dplyr::collect()` については dplyr [公式ドキュメント](https://dplyr.tidyverse.org/reference/compute.html) 参照. 蛇足ながら, 関連項目として, `dplyr::compute()`, `dplyr::copy_to` あたりにもよくお世話になる. 
+
+\newpage

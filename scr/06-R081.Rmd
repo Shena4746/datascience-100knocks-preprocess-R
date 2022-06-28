@@ -3,7 +3,7 @@
 
 ```{r R081}
 product_tbl %>%
-    mutate(across(c(unit_price, unit_cost), ~ coalesce(.x, mean(.x) %>% round())))
+    mutate(across(starts_with("unit_"), ~ coalesce(.x, mean(.x) %>% round())))
 ```
 
 ## R-083 {-}
@@ -24,7 +24,7 @@ product_tbl %>%
     dplyr::group_modify(~ mutate(
         .x,
         across(
-            .cols = c(unit_price, unit_cost),
+            .cols = starts_with("unit_"),
             .fns = ~ coalesce(.x, median(.x, na.rm = TRUE) %>% round())
         )
     )) %>%
@@ -43,51 +43,138 @@ product_tbl %>%
 具体的な作業として面倒なのは, `group_modify` の `coalesce` の 2 引数目.
 例として, `.x` が `unit_price` のときを考える. 2 引数目には, 同じカテゴリの `unit_price_med` が来て欲しい. そこで, `cur_data()` で現在処理中のテーブル (これは `group_modify` によってリストに分割されたカテゴリごとの小テーブルである)を, `cur_column()` で現在処理中のカラム名をそれぞれ取得して, `summarise(across("unit_price_med", first))` としてこの列の最初の行の値を取ってきている. 各小テーブル内では, `xxxx_xxxx_med` の値は定数なので, サンプルする行はどこでもよい. 
 
-```{r R083-2, collapse=TRUE}
+```{r R083-2}
+rows_to_impute <- c("unit_price", "unit_cost")
 product_tbl %>%
     group_by(category_small_cd) %>%
     # calculate median for each category
     summarise(
         across(
-            .cols = c(unit_price, unit_cost),
+            .cols = all_of(rows_to_impute),
             .fns = ~ median(.x) %>% round(),
             .names = "{.col}_med"
         )
     ) %>%
     # combine median and rows with missing value
-    inner_join(product_tbl %>% filter(if_any(-c(), ~ is.na(.))), by = "category_small_cd") %>%
+    inner_join(product_tbl %>% filter(if_any(everything(), ~ is.na(.))), by = "category_small_cd") %>%
     collect() %>%
     group_by(category_small_cd) %>%
     group_modify(
         ~ mutate(
             .x,
             across(
-                .cols = c(unit_price, unit_cost),
+                .cols = all_of(rows_to_impute),
                 .fns = ~ coalesce(.x, cur_data() %>% summarise(across(stringr::str_c(cur_column(), "_med"), first)) %>% collect() %>% as.numeric())
             )
         )
     ) %>%
     select(-ends_with("_med")) %>%
-    # temporarily save table in server. see "copy_to"
-    copy_to(con, ., name = "product_sub_imputed", overwrite = TRUE)
-product_tbl %>%
-    filter(if_all(-c(), ~ !is.na(.))) %>%
-    copy_to(con, ., name = "product_sub_nonimputed", overwrite = TRUE)
-
-# combine and show
-# view also lives temporarily
-DBI::dbSendQuery(con, "
-	create view product_imputed as
-	select *
-	from product_sub_imputed
-	union all
-	select *
-	from product_sub_nonimputed
-")
-# show tables available now
-DBI::dbListTables(con)
-# check the numebr of non-misssing rows
-tbl(con, "product_imputed") %>%
-    filter(if_all(-c(), ~ !is.na(.))) %>%
-    summarise(n())
+    # copy_to method temporarily saves table in server
+    copy_to(con, ., overwrite = TRUE) %>%
+    # then merge tables
+    dplyr::union(product_tbl %>% filter(if_all(everything(), ~ !is.na(.)))) %>%
+    # make sure that the merged table has no missing cells
+    summarise(across(.cols = everything(), .fns = ~ if_else(is.na(.x), 1, 0) %>% sum(), .names = "{.col}_NA"))
 ```
+
+## R-084 {-}
+>顧客データ（df_customer）の全顧客に対して全期間の売上金額に占める2019年売上金額の割合を計算し、新たなデータを作成せよ。ただし、売上実績がない場合は0として扱うこと。そして計算した割合が0超のものを抽出し、結果を10件表示せよ。また、作成したデータに欠損が存在しないことを確認せよ。
+
+```{r R084}
+receipt_tbl %>%
+    mutate(year = sales_ymd %>% as.character() %>% substr(1, 4)) %>%
+    group_by(customer_id) %>%
+    summarise(
+        amount_all = sum(amount, na.rm = TRUE),
+        amount_2019 = sum(if_else(year == "2019", coalesce(amount, 0), 0), na.rm = TRUE)
+    ) %>%
+    right_join(customer_tbl %>% select(customer_id), by = "customer_id") %>%
+    mutate(across(
+        .cols = starts_with("amount"),
+        .fns = ~ coalesce(.x, .0)
+    )) %>% # the first of asked data
+    filter(amount_2019 > 0) %>%
+    # the second one
+    mutate(ratio_2019 = amount_2019 / amount_all) %>%
+    head()
+```
+
+## R-087 {-}
+>顧客データ（df_customer）では、異なる店舗での申込みなどにより同一顧客が複数登録されている。名前（customer_name）と郵便番号（postal_cd）が同じ顧客は同一顧客とみなして1顧客1レコードとなるように名寄せした名寄顧客データを作成し、顧客データの件数、名寄顧客データの件数、重複数を算出せよ。ただし、同一顧客に対しては売上金額合計が最も高いものを残し、売上金額合計が同一もしくは売上実績がない顧客については顧客ID（customer_id）の番号が小さいものを残すこととする。
+
+dbplyr のバージョンが古いと `distinct` の `.keep_all = TRUE` でエラーが出るかも. バージョン 2.2.1 では大丈夫だった.
+
+```{r R087}
+customer_tbl_u <- customer_tbl %>%
+    left_join(receipt_tbl %>% select(customer_id, amount), by = "customer_id") %>%
+    group_by(across(all_of(customer_tbl %>% colnames()))) %>%
+    summarise(sales_amount = amount %>% sum() %>% coalesce(0), .groups = "drop") %>%
+    group_by(customer_name, postal_cd) %>%
+    window_order(desc(sales_amount), customer_id) %>%
+    distinct(customer_name, postal_cd, .keep_all = TRUE) %>%
+    ungroup()
+
+customer_tbl_u %>% summarise(n())
+```
+
+## R-089 {-}
+>売上実績がある顧客を、予測モデル構築のため学習用データとテスト用データに分割したい。それぞれ8:2の割合でランダムにデータを分割せよ。
+
+データをダウンロードせずに処理を片付けたいので, 公式回答のように `rsample::initial_split` を使わずに `dplyr::slice_sample()` でゴリ押しする.
+ dbplyr の現バージョンだと, `dplyr::slice_sample()` の `prop = ` 変数を受け入れてくれないので, サンプルサイズ `n = ` を直接指定している.
+
+```{r R089, collapse=TRUE}
+customer_with_sales_history <- receipt_tbl %>%
+    group_by(customer_id) %>%
+    summarise(sales_amount = amount %>% sum(na.rm = TRUE), .groups = "drop") %>%
+    filter(sales_amount > 0)
+
+count_rows <- function(table) {
+    table %>%
+        summarise(n()) %>%
+        collect() %>%
+        data.frame() %>%
+        .[1, 1] %>%
+        as.double()
+}
+
+N <- customer_with_sales_history %>% count_rows()
+
+data_test <- customer_with_sales_history %>% slice_sample(n = 0.2 * N, replace = FALSE)
+data_train <- dplyr::setdiff(customer_with_sales_history, data_test)
+
+"size of N:" %>% paste(N)
+"ratio of training data:" %>% paste(count_rows(data_train) / N)
+"ratio of test data:" %>% paste(count_rows(data_test) / N)
+```
+
+## R-091 {-}
+>顧客データ（df_customer）の各顧客に対し、売上実績がある顧客数と売上実績がない顧客数が1:1となるようにアンダーサンプリングで抽出せよ。
+
+アンダーサンプリングの実行方法は全問と同様.
+最後に, サンプリング結果を公式回答のように1つのテーブルに結合した.
+
+```{r R091}
+customer_sales_amount <- customer_tbl %>%
+    left_join(receipt_tbl %>% select(customer_id, amount), by = "customer_id") %>%
+    group_by(customer_id) %>%
+    summarise(amount = amount %>% sum(na.rm = TRUE) %>% coalesce(0), .groups = "drop") %>%
+    mutate(purchase = if_else(amount > 0, 1, 0))
+
+customer_with_sales_history <- customer_sales_amount %>% filter(amount > 0)
+
+# size of down sampling
+size <- count_rows(customer_sales_amount) %>% min(customer_with_sales_history %>% count_rows())
+
+# union each of sampled group
+down_samples_tbl <- customer_sales_amount %>%
+    filter(amount == 0) %>%
+    slice_sample(n = size) %>%
+    dplyr::union(customer_with_sales_history %>% slice_sample(n = size))
+
+down_samples_tbl %>%
+    group_by(purchase) %>%
+    summarise(n = n())
+```
+
+## おまけ: 処理結果の DB への保存
