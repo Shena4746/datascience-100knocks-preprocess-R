@@ -69,8 +69,10 @@ product_tbl %>%
         )
     ) %>%
     select(-ends_with("_med")) %>%
-    # copy_to method temporarily saves table in server
-    copy_to(con, ., overwrite = TRUE) %>%
+    # copy_inline method temporarily saves table in server specified by the first augment (not saves as a table)
+    RPostgres::dbWriteTable(conn = con, name = "tmp", value = ., overwirte = TRUE, temporary = TRUE)
+
+tbl(con, "tmp") %>%
     # then merge tables
     dplyr::union(product_tbl %>% filter(if_all(everything(), ~ !is.na(.)))) %>%
     # make sure that the merged table has no missing cells
@@ -176,5 +178,3 @@ down_samples_tbl %>%
     group_by(purchase) %>%
     summarise(n = n())
 ```
-
-## おまけ: 処理結果の DB への保存

@@ -4,4 +4,4 @@ dbplyr-とは
 準備
 回答例
 日付処理へのコメント
-おまけ-処理結果の-db-への保存
+references-dbplyr-dbi-rpostgres-参考資料

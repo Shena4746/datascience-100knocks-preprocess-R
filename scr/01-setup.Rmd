@@ -1,6 +1,6 @@
 # 準備
 
-Postgres DB が立ててあると想定して, R から DB へ接続する.
+Postgres DB がどこかに立ててあると想定して, R から DB へ接続する.
 [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) 記載の方法に従う.
 
 必須パッケージ達.
@@ -8,19 +8,20 @@ Postgres DB が立ててあると想定して, R から DB へ接続する.
 
 ```{r libraries, include=FALSE}
 library("DBI")
+library("RPostgres")
 library("dbplyr")
 library("dplyr")
 ```
 
 ```{r versions-of-libraries, collapse=TRUE}
 R.version.string # R version
-packageVersion("DBI")
 packageVersion("RPostgres")
+packageVersion("DBI")
 packageVersion("dbplyr")
 packageVersion("dplyr")
 ```
 
-まだしてなければ, Postgres を起動.
+まだしてなければ, bash を叩いて Postgres を起動.
 ```{bash, eval=FALSE}
 sudo service postgresql start
 ```
@@ -30,7 +31,7 @@ sudo service postgresql start
 
 ```{r example1-connect-to-DB, eval=FALSE}
 con <- DBI::dbConnect(
-    RPostgreSQL::PostgreSQL(),
+    drv = RPostgreSQL::PostgreSQL(),
     host = "database.rstudio.com",
     user = "your-name",
     password = rstudioapi::askForPassword("Database password")
@@ -43,7 +44,7 @@ con <- DBI::dbConnect(
 
 ```{r example2-connect-to-DB, eval=FALSE}
 con <- DBI::dbConnect(
-    RPostgres::Postgres(),
+    drv = RPostgres::Postgres(),
     host = "localhost",
     port = 5432,
     dbname = "your-database-name",
@@ -52,14 +53,15 @@ con <- DBI::dbConnect(
 )
 ```
 
-```{r connect-to-DB, eval = TRUE,include=FALSE}
+```{r connect-to-DB, eval = TRUE, include=FALSE}
+dw <- config::get("datascience-100knocks-preprocess")
 con <- DBI::dbConnect(
-    RPostgres::Postgres(),
-    host = "localhost",
-    port = 5432,
-    dbname = "knock100",
-    user = "guest",
-    password = "guest"
+    drv = RPostgres::Postgres(),
+    host = dw$host,
+    port = dw$port,
+    dbname = dw$dbname,
+    user = dw$user,
+    password = dw$password
 )
 ```
 
@@ -88,5 +90,3 @@ receipt_tbl %>%
 ```
 
 この `customer_tbl` 等の参照を使って dplyr の文法でデータ加工処理を書いていく.
-
-\newpage
