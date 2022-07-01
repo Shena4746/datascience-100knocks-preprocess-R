@@ -2,6 +2,8 @@
 概要
 dbplyr-とは
 準備
+r-から-db-への接続
+dbplyr-ミニマムレビュー
 回答例
 日付処理へのコメント
-references-dbplyr-dbi-rpostgres-参考資料
+references

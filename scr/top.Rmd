@@ -25,13 +25,11 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 
 ## dbplyr とは
 
-詳細は以下に貼る公式ドキュメントや解説記事に譲り, ここでは大雑把に書く. dbplyr とは, dplyr の文法で書いた加工処理を SQL クエリに翻訳して実行し, その結果を返してくれるパッケージ. 
+詳細は \@ref(references) References や以下の文献に譲り, ここでは大雑把に書く. dbplyr とは, dplyr の文法で書いた加工処理を接続先に合わせた適切な SQL クエリに翻訳して実行し, DBI などの DB バックエンドパッケージと連携して, 実行結果を返してくれるパッケージ. SQL と同様に, 実際の計算はサーバー側で行い, 実行結果 (に対する参照) が手元に返される.
 
 - [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html)
 - [巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として](https://yutatoyama.github.io/note/intro_R_for_SQL.html)
 
-手元にデータをダウンロードしようとしなければ, SQL の場合と同様に, クエリの実行コストはサーバー側が持ってくれる. dbplyr で SQL に翻訳可能なコードのみ利用可能. したがって, 手元にデータを直接ダウンロードした場合に比べて, 必然的に道具立ては少なくなる. なお, この翻訳可能性は個別のコード単位で決定されるものであり, パッケージ単位で決まっているわけではない. この翻訳問題を回避するには, `dplyr::collect()` を使ってクエリ実行後の実データをダウンロードする必要があるが, それが一般に可能なのは `summarise()` などでデータサイズが十分に小さくなった場合であろう.
+SQL への翻訳を挟むので, dbplyr で利用可能な R コードは, SQL に翻訳可能なものに限られる. 必然的に, 手元にデータを直接ダウンロードした場合に比べて, 道具立ては少なくなる. なお, この翻訳可能性は個別のコード単位で決定されるものであり, パッケージ単位で決まっているわけではない. この翻訳問題を回避するには, `dplyr::collect()` を使ってクエリ実行後の実データをローカルマシンにダウンロードする必要があるが, それが一般に可能なのは `summarise()` などでデータサイズが十分に小さくなった場合であろう.
 
-`dplyr::collect()` については dplyr [公式ドキュメント](https://dplyr.tidyverse.org/reference/compute.html) 参照. 蛇足ながら, 関連項目として, `dplyr::compute()`, `dplyr::copy_to` あたりにもよくお世話になる. 
-
-\newpage
+`dplyr::collect()` については dplyr [公式ドキュメント](https://dplyr.tidyverse.org/reference/compute.html) 参照.

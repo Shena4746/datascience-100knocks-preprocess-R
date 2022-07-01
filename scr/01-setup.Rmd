@@ -1,6 +1,9 @@
 # 準備
 
-Postgres DB がどこかに立ててあると想定して, R から DB へ接続する.
+Postgres DB がどこかに立ててあると想定して, R から DB へ接続する. その後, DB 上のデータを dbplyr で扱うための最低限の知識をレビューする.
+
+## R から DB への接続
+
 [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html) 記載の方法に従う.
 
 必須パッケージ達.
@@ -40,7 +43,7 @@ con <- DBI::dbConnect(
 
 >If you’re not using RStudio, you’ll need some other way to securely retrieve your password. You should never record it in your analysis scripts or type it into the console. [Securing Credentials](https://db.rstudio.com/best-practices/managing-credentials) provides some best practices.
 
-これを踏まえると, 以下の接続方法は大変行儀が悪いが, 今回はどうせ localhost にこのノック限定で立てている DB だろうし, さっさと準備を終える意味でも, ここでは咎めないことにする.
+これを踏まえると, 以下の接続方法は大変行儀が悪いが, 今回はどうせ localhost にこのノック限定で立てている DB だろうから, ここでは咎めないことにする. 
 
 ```{r example2-connect-to-DB, eval=FALSE}
 con <- DBI::dbConnect(
@@ -71,7 +74,12 @@ con <- DBI::dbConnect(
 DBI::dbListTables(con)
 ```
 
-各テーブルへの参照を取得.
+## dbplyr ミニマムレビュー
+
+本稿の方法でノックを倒す際に裏で頼ることになる dbplyr について, かけ足で解説する. 
+知識習得の目的をノックを倒すことの限定すれば, テーブルの参照の取得方法と `collect()` の使い方が分かれば問題ない. より詳細を知るには, \@ref(references) References に挙げた文献が有用.
+
+まずは, DB 上のテーブルへの参照を取得しよう. 
 
 ```{r name-variables, eval=TRUE}
 customer_tbl <- dplyr::tbl(con, "customer")
@@ -79,9 +87,10 @@ category_tbl <- dplyr::tbl(con, "category")
 product_tbl <- dplyr::tbl(con, "product")
 receipt_tbl <- dplyr::tbl(con, "receipt")
 store_tbl <- dplyr::tbl(con, "store")
+customer_tbl %>% class()
 ```
 
-ちゃんとクエリが飛ばせるかテスト.
+なお, この参照は `DBI::dbDisconnect()` によって失われる. 次に, この参照を使ってクエリが飛ばせるかテスト. 
 
 ```{r query-test}
 receipt_tbl %>%
@@ -89,4 +98,69 @@ receipt_tbl %>%
     head()
 ```
 
-この `customer_tbl` 等の参照を使って dplyr の文法でデータ加工処理を書いていく.
+このとき返されるのは実データとしての `tibble` ではなく, 入力元のリモートテーブルと同じ `tbl_dbi` オブジェクトである. dbplyr の文脈では `tbl_lazy` と呼ばれることも多いようだ.
+
+```{r tbl_dbi_class}
+receipt_tbl %>%
+    filter(amount >= 1000) %>%
+    head() %>%
+    class()
+```
+
+実データではないので, `tbl_dbi %>% nrow()` は常に `NA` になる.
+
+```{r nrow-does-not-works}
+receipt_tbl %>% nrow()
+```
+
+代替手段としては, `summarise` で数えてもらえばよい. 
+
+```{r summarise-as-nrow}
+receipt_tbl %>% summarise(n())
+```
+
+実行結果を実データとして手元にダウンロードするには, `dplyr::collect()` を使う. これを実行した時点で DB との関連は切れて, ローカルの独立したデータとなる. 
+
+```{r collect}
+receipt_tbl %>%
+    summarise(n()) %>%
+    collect()
+```
+
+見慣れた `tibble` が落ちてきたことが確認できる.
+
+R 上の加工処理がどのような SQL クエリに翻訳されたかは `dbplyr::show_query()` によって調べることができる. 
+
+```{r }
+receipt_tbl %>%
+    summarise(n()) %>%
+    show_query()
+```
+
+なお, この翻訳結果を文字列として得るには `show_query()` ではなく, `dbplyr::sql_render()` を使う. なお, 間に `collect()` を挟んだデータをこれらのメソッドに与えるとエラーになる.
+
+```{r error-show-query, error=TRUE}
+receipt_tbl %>%
+    summarise(n()) %>%
+    collect() %>%
+    show_query()
+```
+
+DB 上のテーブルとの関連を失ったデータを得る方法を SQL で表すことはできないという自然な挙動だ.
+
+`collect()` とは反対に, ローカルの `tibble` や `data.frame` を DB に渡してテーブルとして保存する手段もある. `RPostgres::dbWriteTable()` を使うことを勧める.
+
+```{r write-table}
+receipt_tbl %>%
+    head() %>%
+    collect() %>%
+    RPostgres::dbWriteTable(conn = con, name = "receipt_tmp", value = ., overwirte = TRUE, temporary = TRUE)
+con %>% DBI::dbListTables()
+```
+
+より手軽な類似の手段として, `dplyr::copy_to()` や `dpylr::copy_inline()` もある. しかし, これらはデモ以外の目的で使うべきではない. なぜかと言うと, たとえば, `dpylr::copy_inline()` はリモートサーバー ( のメモリ領域?) にコネクションが切れるまでの間限定の temporary なテーブルを作るが, このテーブルを参照する temporary でないビューが作れてしまう. そして, 再接続後にこのビューを参照するとエラーになる. なんじゃそりゃ.
+
+`RPostgres::dbWriteTable()` でも temporary なテーブルは作成可能だが, それを参照したビューは接続解除と同時に消えるぶんマシである. というより, そもそもビューではなくて一時オブジェクトとして扱われているようだ. 本稿では `dpylr::copy_inline()` 等は避けて `RPostgres::dbWriteTable()` を使う. あまりドキュメント化されておらず厄介な部分なので, `DBI::dbListTables()` や `DBI::dbListObjects()`, または直接に SQL によって, 挙動の違いを一度比較してみることを勧めたい.
+
+パッケージの解説はここで切り上げ, 本題のノックを倒す方に移る. 次章で, 上で得た `customer_tbl` 等の参照を使って, dplyr の文法でデータ加工処理を書いていく. その際, dbplyr の知識を明示的に使う機会は主に, 「いつ `collect()` を使うか」という形で現れる. したがって, そこさえ抑えられていれば, ここで解説した内容の細部に拘らず先に進んで全く問題ない.
+
