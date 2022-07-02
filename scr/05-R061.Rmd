@@ -42,13 +42,48 @@ receipt_tbl %>%
     head()
 ```
 
-
 ## R-078 {-}
 >レシート明細データ（df_receipt）の売上金額（amount）を顧客単位に合計し、合計した売上金額の外れ値を抽出せよ。ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。なお、ここでは外れ値を第1四分位と第3四分位の差であるIQRを用いて、「第1四分位数-1.5×IQR」を下回るもの、または「第3四分位数+1.5×IQR」を超えるものとする。結果は10件表示せよ。
 
-dbplyr と中央値計算の相性の悪さから, `collect()` するしかない. `collect()` しないなら SQL でサブクエリ書くのが現実的.
+dbplyr と中央値計算の相性が悪いので, 計算コストを余計に払うことになった. アイディアは, join を使って強引に以下の実行結果を得ようというもの.
 
-```{r R078}
+```{r R078-idea, eval=FALSE}
+# quantile() under mutate() raises error with dbplyr
+receipt_tbl %>%
+    group_by(customer_id) %>%
+    summarise(amount = amount %>% sum(na.rm = TRUE)) %>%
+    mutate(
+        q1 = amount %>% quantile(probs = 0.25),
+        q3 = amount %>% quantile(probs = 0.75),
+        iqr = q3 - q1
+    )
+```
+
+一旦 `summarise` で中央値を持つテーブルを作り, ダミーキーを足がかりにして強引に元のテーブルと結合させた. dbplyr でもサブクエリのような書き方ができれば, join の必要はないだろうが, 現状ではできないっぽい. サブクエリは dplyr 限定?
+
+```{r R078-2}
+sales_by_id <- receipt_tbl %>%
+    group_by(customer_id) %>%
+    summarise(amount = amount %>% sum(na.rm = TRUE))
+
+sales_by_id %>%
+    summarise(
+        q1 = amount %>% quantile(probs = 0.25),
+        q3 = amount %>% quantile(probs = 0.75),
+        .groups = "drop"
+    ) %>%
+    mutate(
+        iqr = q3 - q1,
+        dummy_key = -1, # used just for joining tables
+    ) %>%
+    right_join(sales_by_id %>% mutate(dummy_key = -1), by = "dummy_key") %>%
+    filter(amount < q1 - 1.5 * iqr | q3 + 1.5 * iqr < amount) %>%
+    select(-dummy_key)
+```
+
+`collect()` していいなら簡潔に書ける.
+
+```{r R078-1}
 receipt_tbl %>%
     filter(!str_detect(customer_id, "^Z")) %>%
     group_by(customer_id) %>%
@@ -81,6 +116,7 @@ product_tbl %>%
 ```
 
 データを手元にダウンロードしていいなら `complete.cases`も手軽.
+
 ```{r R080-2}
 product_tbl %>%
     collect() %>%
