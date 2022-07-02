@@ -1,6 +1,11 @@
-# 準備
+# 準備 {#setup}
 
 Postgres DB がどこかに立ててあると想定して, R から DB へ接続する. その後, DB 上のデータを dbplyr で扱うための最低限の知識をレビューする.
+
+チュートリアルとしては, 以下も参考になる. 必要に応じて参照されたい.
+
+- [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html)
+- [巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として](https://yutatoyama.github.io/note/intro_R_for_SQL.html)
 
 ## R から DB への接続
 
@@ -74,9 +79,9 @@ con <- DBI::dbConnect(
 DBI::dbListTables(con)
 ```
 
-## dbplyr ミニマムレビュー
+## dbplyr ミニハンズオン
 
-本稿の方法でノックを倒す際に裏で頼ることになる dbplyr について, かけ足で解説する. 
+\@ref(about-dbplyr) で述べた作業フローに沿いながらサンプルコードを示す. 
 知識習得の目的をノックを倒すことの限定すれば, テーブルの参照の取得方法と `collect()` の使い方が分かれば問題ない. より詳細を知るには, \@ref(references) References に挙げた文献が有用.
 
 まずは, DB 上のテーブルへの参照を取得しよう. 
@@ -116,18 +121,43 @@ receipt_tbl %>% nrow()
 代替手段としては, `summarise` で数えてもらえばよい. 
 
 ```{r summarise-as-nrow}
+# count by aggregate function
 receipt_tbl %>% summarise(n())
 ```
 
-実行結果を実データとして手元にダウンロードするには, `dplyr::collect()` を使う. これを実行した時点で DB との関連は切れて, ローカルの独立したデータとなる. 
+dbplyr 越しでは使えないメソッドもある. たとえば, `quantile` は `summarise` 以外では使えない.
+
+```{r quantile-fails, error=TRUE}
+# cause error
+receipt_tbl %>%
+    mutate(amount_quan1 = amount %>% quantile(probs = 0.25)) %>%
+    head()
+```
+
+```{r quantile-works, error=TRUE}
+# quantile works under summarise method
+receipt_tbl %>%
+    summarise(amount_quan1 = amount %>% quantile(probs = 0.25)) %>%
+    head()
+```
+
+2次元以上のベクトルを与えたいときは, `quantile` 処理の手前でデータをダウンロードしておけばよい.
+
+実行結果を実データとして手元にダウンロードするには, `dplyr::collect()` を使うのが基本. これを実行した時点で DB との関連は切れて, ローカルの独立したデータとなる. 
 
 ```{r collect}
 receipt_tbl %>%
     summarise(n()) %>%
-    collect()
+    collect() # donwload data
 ```
-
 見慣れた `tibble` が落ちてきたことが確認できる.
+
+`dplyr::pull(.data, var = -1, name = NULL,...)` では特定の列をベクトルデータとしてダウンロードできる. これはスカラー値を得たいときに特に便利.
+```{r pull}
+receipt_tbl %>%
+    summarise(q1 = amount %>% quantile(probs = 0.25)) %>%
+    pull()
+```
 
 R 上の加工処理がどのような SQL クエリに翻訳されたかは `dbplyr::show_query()` によって調べることができる. 
 
@@ -137,13 +167,13 @@ receipt_tbl %>%
     show_query()
 ```
 
-なお, この翻訳結果を文字列として得るには `show_query()` ではなく, `dbplyr::sql_render()` を使う. なお, 間に `collect()` を挟んだデータをこれらのメソッドに与えるとエラーになる.
+この翻訳結果を文字列として得るには `show_query()` ではなく, `dbplyr::sql_render()` を使う. なお, 間に `collect()` を挟んだデータをこれらのメソッドに与えるとエラーになる.
 
 ```{r error-show-query, error=TRUE}
 receipt_tbl %>%
     summarise(n()) %>%
     collect() %>%
-    show_query()
+    show_query() # error. can't trace back to a remote table
 ```
 
 DB 上のテーブルとの関連を失ったデータを得る方法を SQL で表すことはできないという自然な挙動だ.
@@ -153,14 +183,29 @@ DB 上のテーブルとの関連を失ったデータを得る方法を SQL で
 ```{r write-table}
 receipt_tbl %>%
     head() %>%
+    # download
     collect() %>%
-    RPostgres::dbWriteTable(conn = con, name = "receipt_tmp", value = ., overwirte = TRUE, temporary = TRUE)
+    # and upload
+    RPostgres::dbWriteTable(conn = con, name = "tmp", value = ., overwirte = TRUE, temporary = TRUE)
+# show remote tables
 con %>% DBI::dbListTables()
 ```
 
-より手軽な類似の手段として, `dplyr::copy_to()` や `dpylr::copy_inline()` もある. しかし, これらはデモ以外の目的で使うべきではない. なぜかと言うと, たとえば, `dpylr::copy_inline()` はリモートサーバー ( のメモリ領域?) にコネクションが切れるまでの間限定の temporary なテーブルを作るが, このテーブルを参照する temporary でないビューが作れてしまう. そして, 再接続後にこのビューを参照するとエラーになる. なんじゃそりゃ.
+より手軽な類似の手段として, `dplyr::copy_to()` や `dpylr::copy_inline()` もある. しかし, これらはデモ以外の目的では積極的に使うべきではないと思う. なぜかと言うと, たとえば, `dpylr::copy_inline()` はリモートサーバー ( のメモリ領域?) にコネクションが切れるまでの間限定の temporary なテーブルを作るが, このテーブルを参照する temporary でないビューが作れてしまう. そして, 再接続後にこのビューを参照するとエラーになる. なんじゃそりゃ.
+
+ただし, `dplyr::copy_to()` は `tbl_lazy` を簡単にテーブル化することができるので, その目的に限定すれば使い所はある.
 
 `RPostgres::dbWriteTable()` でも temporary なテーブルは作成可能だが, それを参照したビューは接続解除と同時に消えるぶんマシである. というより, そもそもビューではなくて一時オブジェクトとして扱われているようだ. 本稿では `dpylr::copy_inline()` 等は避けて `RPostgres::dbWriteTable()` を使う. あまりドキュメント化されておらず厄介な部分なので, `DBI::dbListTables()` や `DBI::dbListObjects()`, または直接に SQL によって, 挙動の違いを一度比較してみることを勧めたい.
+
+いずれにせよ, temporary なテーブルは上述のように厄介な挙動を取るので, 用が済んだら消した方が安全.
+
+```{r clean-tmp-table, collapse=TRUE}
+con %>% DBI::dbListTables()
+if (DBI::dbExistsTable(con, "tmp")) {
+    DBI::dbRemoveTable(con, "tmp")
+}
+con %>% DBI::dbListTables()
+```
 
 パッケージの解説はここで切り上げ, 本題のノックを倒す方に移る. 次章で, 上で得た `customer_tbl` 等の参照を使って, dplyr の文法でデータ加工処理を書いていく. その際, dbplyr の知識を明示的に使う機会は主に, 「いつ `collect()` を使うか」という形で現れる. したがって, そこさえ抑えられていれば, ここで解説した内容の細部に拘らず先に進んで全く問題ない.
 

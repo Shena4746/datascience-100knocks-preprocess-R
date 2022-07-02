@@ -15,7 +15,7 @@ product_tbl %>%
 - 分割後の各テーブルごとに欠損処理を行う
 - テーブルを1つの結合
 
-という処理を行う. `.x` には `dplyr::group_modify()` が作った各小テーブルが格納される.
+という処理を行う. 最初の `.x` には `dplyr::group_modify()` が作った各小テーブルが格納される.
 
 ```{r R083-1}
 product_tbl %>%
@@ -40,10 +40,11 @@ product_tbl %>%
 - 欠損行だけだと欠損代入値が不明なので, 事前に代入値を計算しておき欠損行に結合する(これが`inner_join`までの作業)
 - 欠損代入の計算だけを手元で行い (`group_modify`), 計算結果のテーブルはサーバー側に返して, サーバー側で非欠損行からなるテーブルと結合する.
 
-具体的な作業として面倒なのは, `group_modify` の `coalesce` の 2 引数目.
-例として, `.x` が `unit_price` のときを考える. 2 引数目には, 同じカテゴリの `unit_price_med` が来て欲しい. そこで, `cur_data()` で現在処理中のテーブル (これは `group_modify` によってリストに分割されたカテゴリごとの小テーブルである)を, `cur_column()` で現在処理中のカラム名をそれぞれ取得して, `summarise(across("unit_price_med", first))` としてこの列の最初の行の値を取ってきている. 各小テーブル内では, `xxxx_xxxx_med` の値は定数なので, サンプルする行はどこでもよい. 
-
 ```{r R083-2}
+# delete tmp table if there is the one
+if (DBI::dbExistsTable(con, "tmp")) {
+    DBI::dbRemoveTable(con, "tmp")
+}
 rows_to_impute <- c("unit_price", "unit_cost")
 product_tbl %>%
     group_by(category_small_cd) %>%
@@ -64,20 +65,27 @@ product_tbl %>%
             .x,
             across(
                 .cols = all_of(rows_to_impute),
-                .fns = ~ coalesce(.x, cur_data() %>% summarise(across(stringr::str_c(cur_column(), "_med"), first)) %>% collect() %>% as.numeric())
+                .fns = ~ coalesce(.x, cur_data() %>% summarise(across(stringr::str_c(cur_column(), "_med"), first)) %>% pull(1))
             )
         )
     ) %>%
     select(-ends_with("_med")) %>%
-    # copy_inline method temporarily saves table in server specified by the first augment (not saves as a table)
+    # create a temporary table in server
     RPostgres::dbWriteTable(conn = con, name = "tmp", value = ., overwirte = TRUE, temporary = TRUE)
 
 tbl(con, "tmp") %>%
-    # then merge tables
+    # merge tables
     dplyr::union(product_tbl %>% filter(if_all(everything(), ~ !is.na(.)))) %>%
-    # make sure that the merged table has no missing cells
+    # check that the merged table has no NA cells
     summarise(across(.cols = everything(), .fns = ~ if_else(is.na(.x), 1, 0) %>% sum(), .names = "{.col}_NA"))
+# clean temp table
+if (DBI::dbExistsTable(con, "tmp")) {
+    DBI::dbRemoveTable(con, "tmp")
+}
 ```
+
+具体的な作業として面倒なのは, `group_modify` の `coalesce` の 2 引数目.
+例として, この `.x` が `unit_price` のときを考える. 2 引数目には, 同じカテゴリの `unit_price_med` が来て欲しい. そこで, `cur_data()` で現在処理中のテーブル (これは `group_modify` によってリストに分割されたカテゴリごとの小テーブルである)を, `cur_column()` で現在処理中のカラム名をそれぞれ取得して, `summarise(across("unit_price_med", first))` としてこの列の最初の行の値を取ってきている. 各小テーブル内では, `xxxx_xxxx_med` の値は定数なので, サンプルする行はどこでもよい. 
 
 ## R-084 {-}
 >顧客データ（df_customer）の全顧客に対して全期間の売上金額に占める2019年売上金額の割合を計算し、新たなデータを作成せよ。ただし、売上実績がない場合は0として扱うこと。そして計算した割合が0超のものを抽出し、結果を10件表示せよ。また、作成したデータに欠損が存在しないことを確認せよ。
@@ -134,9 +142,7 @@ customer_with_sales_history <- receipt_tbl %>%
 count_rows <- function(table) {
     table %>%
         summarise(n()) %>%
-        collect() %>%
-        data.frame() %>%
-        .[1, 1] %>%
+        pull(1) %>%
         as.double()
 }
 
@@ -153,7 +159,7 @@ data_train <- dplyr::setdiff(customer_with_sales_history, data_test)
 ## R-091 {-}
 >顧客データ（df_customer）の各顧客に対し、売上実績がある顧客数と売上実績がない顧客数が1:1となるようにアンダーサンプリングで抽出せよ。
 
-アンダーサンプリングの実行方法は全問と同様.
+前問と同様に `dplyr::slice_sample()` でゴリ押しする.
 最後に, サンプリング結果を公式回答のように1つのテーブルに結合した.
 
 ```{r R091}
