@@ -78,7 +78,8 @@ sales_by_id %>%
     ) %>%
     right_join(sales_by_id %>% mutate(dummy_key = -1), by = "dummy_key") %>%
     filter(amount < q1 - 1.5 * iqr | q3 + 1.5 * iqr < amount) %>%
-    select(-dummy_key)
+    select(-dummy_key) %>%
+    head()
 ```
 
 `collect()` していいなら簡潔に書ける.
