@@ -4,5 +4,10 @@ about-dbplyr
 setup
 r-から-db-への接続
 dbplyr-ミニハンズオン
+テーブルへの参照
+利用できない-r-関数例
+データのダウンロード-collect-pull
+sql-文の取得-show_query-sql_render
+データのアップロード
 回答例
 references

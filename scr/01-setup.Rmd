@@ -1,4 +1,4 @@
-# 準備 {#setup}
+# 準備と予備知識 {#setup}
 
 Postgres DB がどこかに立ててあると想定して, R から DB へ接続する. その後, DB 上のデータを dbplyr で扱うための最低限の知識をレビューする.
 
@@ -81,10 +81,12 @@ DBI::dbListTables(con)
 
 ## dbplyr ミニハンズオン
 
-\@ref(about-dbplyr) で述べた作業フローに沿いながらサンプルコードを示す. 
+\@ref(about-dbplyr) で述べた作業フローに挙げた項目を, サンプルコードを示す. 
 知識習得の目的をノックを倒すことの限定すれば, テーブルの参照の取得方法と `collect()` の使い方が分かれば問題ない. より詳細を知るには, \@ref(references) References に挙げた文献が有用.
 
 まずは, DB 上のテーブルへの参照を取得しよう. 
+
+### テーブルへの参照
 
 ```{r name-variables, eval=TRUE}
 customer_tbl <- dplyr::tbl(con, "customer")
@@ -112,6 +114,8 @@ receipt_tbl %>%
     class()
 ```
 
+### 利用できない R 関数例
+ 
 実データではないので, `tbl_dbi %>% nrow()` は常に `NA` になる.
 
 ```{r nrow-does-not-works}
@@ -141,7 +145,7 @@ receipt_tbl %>%
     head()
 ```
 
-2次元以上のベクトルを与えたいときは, `quantile` 処理の手前でデータをダウンロードしておけばよい.
+### データのダウンロード: `collect()`, `pull()`
 
 実行結果を実データとして手元にダウンロードするには, `dplyr::collect()` を使うのが基本. これを実行した時点で DB との関連は切れて, ローカルの独立したデータとなる. 
 
@@ -150,7 +154,16 @@ receipt_tbl %>%
     summarise(n()) %>%
     collect() # donwload data
 ```
-見慣れた `tibble` が落ちてきたことが確認できる.
+
+見慣れた `tibble` が落ちてきたことが確認できる. 
+ローカルに持ってくれば翻訳可能性問題は気にしなくてよくなる.
+
+```{r quantile-in-local}
+receipt_tbl %>%
+    collect() %>%
+    mutate(q1 = amount %>% quantile(probs = 0.25)) %>%
+    head()
+```
 
 `dplyr::pull(.data, var = -1, name = NULL,...)` では特定の列をベクトルデータとしてダウンロードできる. これはスカラー値を得たいときに特に便利.
 ```{r pull}
@@ -158,6 +171,8 @@ receipt_tbl %>%
     summarise(q1 = amount %>% quantile(probs = 0.25)) %>%
     pull()
 ```
+
+### SQL 文の取得: `show_query()`, `sql_render()`
 
 R 上の加工処理がどのような SQL クエリに翻訳されたかは `dbplyr::show_query()` によって調べることができる. 
 
@@ -177,6 +192,8 @@ receipt_tbl %>%
 ```
 
 DB 上のテーブルとの関連を失ったデータを得る方法を SQL で表すことはできないという自然な挙動だ.
+
+### データのアップロード
 
 `collect()` とは反対に, ローカルの `tibble` や `data.frame` を DB に渡してテーブルとして保存する手段もある. `RPostgres::dbWriteTable()` を使うことを勧める.
 
@@ -207,5 +224,6 @@ if (DBI::dbExistsTable(con, "tmp")) {
 con %>% DBI::dbListTables()
 ```
 
-パッケージの解説はここで切り上げ, 本題のノックを倒す方に移る. 次章で, 上で得た `customer_tbl` 等の参照を使って, dplyr の文法でデータ加工処理を書いていく. その際, dbplyr の知識を明示的に使う機会は主に, 「いつ `collect()` を使うか」という形で現れる. したがって, そこさえ抑えられていれば, ここで解説した内容の細部に拘らず先に進んで全く問題ない.
+
+パッケージの解説はここで切り上げ, 本題のノックを倒す方に移る. 次章で, 上で得た `customer_tbl` 等の参照を使って, dplyr の文法でデータ加工処理を書いていく. その際, dbplyr の知識を明示的に使う機会は主に, 「翻訳問題回避のためにいつ `collect()` を使うか」という形で現れる. したがって, そこさえ抑えられていれば, ここで解説した内容の細部に拘らず先に進んで全く問題ない.
 

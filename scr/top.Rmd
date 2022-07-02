@@ -27,7 +27,7 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 
 詳細は \@ref(references) - References の文献に譲り, ここでは大雑把に書く. dbplyr とは, 
 dplyr の文法で書いたデータ加工処理を接続先に合わせた適切な SQL クエリに翻訳し, DBI (Database Interface) などのバックエンドとして働くパッケージと連携して, その SQL の実行結果を返してくれるパッケージ. dbplyr は SQL の SELECT 文に相当する処理のみを翻訳する.
-以下は, dbplyr を利用する際の典型的な作業フローの概要. サンプルコードは \@ref(setup) - 準備にある.
+以下は, dbplyr を利用する際の典型的な作業フローの概要. サンプルコードは \@ref(setup) - 準備と予備知識にある.
 
 - **接続**: DBI と 接続先 DB に対応した専用パッケージ (e.g., RPostgres, RSQLite) で接続を確立
 - **テーブルへの参照取得**: 接続した DB 上のテーブルへの参照を取得 
