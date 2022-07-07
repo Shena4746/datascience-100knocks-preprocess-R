@@ -184,3 +184,7 @@ down_samples_tbl %>%
     group_by(purchase) %>%
     summarise(n = n())
 ```
+
+```{r end, include=FALSE}
+con %>% DBI::dbDisconnect()
+```

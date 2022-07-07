@@ -28,27 +28,17 @@ receipt_tbl %>%
     head()
 ```
 
-`collect()` していいなら次のように書ける.
-`.fns` に与える formula のリスト (関数のリストでも可) を `fms` として事前に作っておく.
-文字列を変換して formula を作ってしているのは, 変数 `d` の遅延評価を避けるため.
+`.fns = list()` の中身を手打ちしたくないなら, 次のように `.fns` に与える formula のリスト (関数のリストでも可) を `purrr::map` で一気に作ってしまえばよい. 
+文字列を変換して formula を作ってしているのは, ラグ幅の遅延評価を避けるため.
 
 ```{r R042-2}
-library(stringr)
-
-D <- 3
-
-# lag formulas to apply
-fms <- list()
-for (d in 1:D) fms[[d]] <- stringr::str_c("~ lag(.x, n = ", d, ")") %>% as.formula()
-
 receipt_tbl %>%
     group_by(sales_ymd) %>%
-    summarise(sales_daily = sum(sales_ymd)) %>%
-    collect() %>%
+    summarise(sales_daily = sales_ymd %>% sum(na.rm = TRUE)) %>%
     mutate(
         across(
             .cols = sales_daily,
-            .fns = fms,
+            .fns = purrr::map(1:3, ~ paste("~ lag(.x, n = ", .x, ")", sep = "") %>% as.formula()),
             .names = "{.col}_lag_{.fn}"
         )
     ) %>%
