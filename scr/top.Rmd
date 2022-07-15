@@ -17,12 +17,14 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE, warning = FALSE)
 
 
 # 概要
-このドキュメントは, [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess) を WSL2 + Ubuntu20.04 + R で解いた記録. dbplyr パッケージを利用して, 極力データを手元にダウンロードせずに, DB 上の操作だけで完結する手段をとる. なお, 全問の回答は載せていない. 特に, SQL の方が楽にできる問題や公式回答と似た回答になった問題の多くはスキップしている.
+このドキュメントは, [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess) を WSL2 + Ubuntu20.04 + R で解いた記録. データは全て DB 上にあると想定し, 極力データを手元にダウンロードせずに, DB 上の操作だけで完結させる方針をとる. そのため, dbplyr パッケージが上手く働く書き方を優先して選ぶ. 
+
+なお, 全問の回答は載せていない. 特に, SQL の方が楽にできる問題や公式回答と似た回答になった問題の多くはスキップしている.
 
 以下の記事は大変参考にさせていただきました. 公開に感謝します.
 [【R】データサイエンス100本ノック（構造化データ加工編）をtidyverseでやった](https://qiita.com/eitsupi/items/ae0476605cbaa3b04fc7)
 
-dbplyr については以下を参照.
+dbplyr については以下を参照. 以下では, これらの記事程度の知識を仮定する.
 
 - [巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として](https://yutatoyama.github.io/note/intro_R_for_SQL.html)
 - [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html)

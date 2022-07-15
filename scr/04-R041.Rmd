@@ -154,7 +154,40 @@ customer_tbl %>%
 ## R-054 {-}
 >顧客データ（df_customer）の住所（address）は、埼玉県、千葉県、東京都、神奈川県のいずれかとなっている。都道府県毎にコード値を作成し、顧客ID、住所とともに10件表示せよ。値は埼玉県を11、千葉県を12、東京都を13、神奈川県を14とすること。
 
-```{r R054}
+公式回答のように,素直に `case_when` を使うのが無難だが, 次のように join を許せば, 扱う都道府県が増えても管理が楽な書き方ができる. 正規化されたテーブルデータを結合して分析用のテーブルを作る作業を想定するなら, `case_when` よりもこの書き方の方が自然に思える.
+
+```{r r R054-1, collapse=TRUE}
+pref_vec <- c("埼玉県", "千葉県", "東京都", "神奈川")
+pref_map <- function(str) which(str == pref_vec) %>% as.integer() + 10
+pref_name <- "pref"
+# prepare a lazy table that holds the correspondance of pref and its code
+pref_code_tbl <- data.frame(pref = pref_vec) %>%
+    mutate(
+        across(
+            .cols = pref,
+            .fns = pref_map,
+            .names = "pref_code"
+        )
+    ) %>%
+    dbplyr::copy_inline(con = con, df = .)
+pref_code_tbl %>% print()
+
+# create pref row in customer_tbl and then merge
+customer_tbl %>%
+    select(customer_id, address) %>%
+    mutate(
+        across(
+            .cols = address,
+            .fns = ~ substr(.x, 1, 3),
+            .names = pref_name
+        )
+    ) %>%
+    left_join(pref_code_tbl, by = pref_name)
+```
+
+`collect` していいなら簡潔に書ける. `mutate(across())` に `pref_code` を作る作業を直接担わせれば良い. 
+
+```{r R054-2}
 pref_vec <- c("埼玉県", "千葉県", "東京都", "神奈川")
 pref_map <- function(str) which(str == pref_vec) + 10 %>% as.integer()
 
@@ -181,7 +214,7 @@ customer_tbl %>%
 >- 第3四分位以上:				4を付与
 
 
-公式回答のように `case_when` で場合分けするのが素直なやり方だが, カテゴリ数が増えたとき非常に冗長なコードとなる. `collect()`を使ってもよいなら, 以下のような書き方もできる.
+公式回答のように `case_when` で場合分けするのが素直なやり方だが, カテゴリ数が増えたとき冗長なコードとなる. `collect()`を使ってもよいなら, 以下のような書き方もできる.
 
  ```{r R055}
 receipt_tbl %>%
@@ -192,8 +225,18 @@ receipt_tbl %>%
         across(
             .cols = amount,
             .fns = function(cls) {
-                q <- quantile(cls, probs = c(0.25, 0.5, 0.75, 1.0))
-                purrr::map_int(cls, ~ which(.x <= q) %>% min())
+                q <- quantile(
+                    cls,
+                    probs = c(0.25, 0.5, 0.75, 1.0)
+                )
+                purrr::map_int(
+                    .x = cls,
+                    .f = ~ ifelse(
+                        .x >= q[length(q) - 1],
+                        4L,
+                        which(.x < q) %>% min()
+                    )
+                )
             },
             .names = "pct_group"
         )

@@ -41,11 +41,8 @@ product_tbl %>%
 - 欠損代入の計算だけを手元で行い (`group_modify`), 計算結果のテーブルはサーバー側に返して, サーバー側で非欠損行からなるテーブルと結合する.
 
 ```{r R083-2}
-# delete tmp table if there is the one
-if (DBI::dbExistsTable(con, "tmp")) {
-    DBI::dbRemoveTable(con, "tmp")
-}
 rows_to_impute <- c("unit_price", "unit_cost")
+
 product_tbl %>%
     group_by(category_small_cd) %>%
     # calculate median for each category
@@ -56,8 +53,15 @@ product_tbl %>%
             .names = "{.col}_med"
         )
     ) %>%
-    # combine median and rows with missing value
-    inner_join(product_tbl %>% filter(if_any(everything(), ~ is.na(.))), by = "category_small_cd") %>%
+    # combine median and rows with NA
+    inner_join(product_tbl %>% filter(
+        if_any(
+            everything(),
+            ~ is.na(.)
+        )
+    ),
+    by = "category_small_cd"
+    ) %>%
     collect() %>%
     group_by(category_small_cd) %>%
     group_modify(
@@ -65,23 +69,26 @@ product_tbl %>%
             .x,
             across(
                 .cols = all_of(rows_to_impute),
-                .fns = ~ coalesce(.x, cur_data() %>% summarise(across(stringr::str_c(cur_column(), "_med"), first)) %>% pull(1))
+                .fns = ~ coalesce(
+                    .x,
+                    cur_data() %>% summarise(
+                        across(
+                            .cols = stringr::str_c(cur_column(), "_med"),
+                            .fns = first
+                        )
+                    ) %>% pull(1)
+                )
             )
         )
     ) %>%
     select(-ends_with("_med")) %>%
-    # create a temporary table in server
-    RPostgres::dbWriteTable(conn = con, name = "tmp", value = ., overwirte = TRUE, temporary = TRUE)
-
-tbl(con, "tmp") %>%
-    # merge tables
+    # turn this into a lazy table
+    dbplyr::copy_inline(con = con, df = .) %>%
+    # merge the lazy table with the table of rows with no NA
     dplyr::union(product_tbl %>% filter(if_all(everything(), ~ !is.na(.)))) %>%
-    # check that the merged table has no NA cells
+    # now we have the required table
+    # check that the table has no NA cells
     summarise(across(.cols = everything(), .fns = ~ if_else(is.na(.x), 1, 0) %>% sum(), .names = "{.col}_NA"))
-# clean temp table
-if (DBI::dbExistsTable(con, "tmp")) {
-    DBI::dbRemoveTable(con, "tmp")
-}
 ```
 
 具体的な作業として面倒なのは, `group_modify` の `coalesce` の 2 引数目.
