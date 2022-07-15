@@ -5,7 +5,7 @@
 	- [巨大なデータがSQLサーバーにあるときに、Rでどう立ち向かうかマニュアル：dbplyrパッケージを中心として](https://yutatoyama.github.io/note/intro_R_for_SQL.html)
 	- [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html)
 	- [R: Working with Databases](https://nuitrcs.github.io/databases_workshop/r/r_databases.html)
-	- [dbplyr 概論](https://shena4746.github.io/dbplyr-overview/#ref)
+	- [dbplyr 概論](https://shena4746.github.io/dbplyr-overview/)
 - DBI
 	- [Introduction to DBI](https://dbi.r-dbi.org/articles/dbi)
 	- [RSQLite & DBIの使い方](http://delta0726.web.fc2.com/packages/database/00_RSQLite.html)
@@ -13,4 +13,3 @@
 	- [DBI: R Database Interface .pdf](https://cran.r-project.org/web/packages/DBI/DBI.pdf)
 - RPostgres
 	- [RPostgres - Reference](https://rpostgres.r-dbi.org/reference/index.html)
-
